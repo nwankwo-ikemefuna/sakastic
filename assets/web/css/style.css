@@ -181,3 +181,12 @@ body {
 .bar_title::after {
   right: 0;
 }
+.post_action_container {
+  padding: 15px 0;
+}
+.post_container .feat_image img {
+  width: 90px;
+  height: auto;
+  float: right;
+  margin-left: 20px;
+}

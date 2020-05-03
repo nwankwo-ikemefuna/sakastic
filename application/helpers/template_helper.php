@@ -16,7 +16,7 @@ function ajax_page_link($url, $html = '', $class = '', $attrs = '', $id = '', $c
     echo $btn; 
 }
 
-function ajax_page_button($url, $html = '', $class = '', $title = '', $icon = '', $attrs = '', $id = '', $callback = '', $loading = 1, $loading_text = '', $container = '', $return = false) { 
+function ajax_page_button($container, $url, $html = '', $class = '', $title = '', $icon = '', $attrs = '', $id = '', $callback = '', $loading = 1, $loading_text = '', $return = false) { 
     $container = strlen($container) ? $container : 'ajax_page_container';
     $id_attr = strlen($id) ? "id='{$id}" : '';
     $html = (strlen($icon) ? "<i class='fa fa-{$icon}'></i> " : '') . $html;

@@ -34,23 +34,32 @@ class Posts extends Core_controller {
         $page = paginate_offset($page, $per_page);
         $where = $this->filter();
         $records = $this->post_model->get_posts($where, '', 0, $per_page, $page);
-        // last_sql();
+        // last_sql(); die;
         $total_records = $this->post_model->count_all($where);
-        // last_sql();
         $data = paginate($records, $total_records, $per_page, 'api/posts/list');
         json_response($data);
     }
 
 
-    public function vote() {
-        $this->check_loggedin();
-        $data = $this->post_model->vote();
+    public function view() {
+        $this->form_validation->set_rules('id', 'ID', 'trim|required');
+        $this->form_validation->set_rules('type', 'Type', 'trim|required');
+        if ($this->form_validation->run() === FALSE)
+            json_response(validation_errors(), false);
+        $id = xpost('id');
+        $row = $this->post_model->get_details($id);
+        //send prepared post
+        $data = $this->post_model->prepare_post($row);
         json_response($data);
     }
 
-
+    
     public function add() {
         $this->check_loggedin();
+        $this->form_validation->set_rules('content', 'Post', 'trim|required');
+        $this->form_validation->set_rules('smt_images', 'Images', 'trim');
+        if ($this->form_validation->run() === FALSE)
+            json_response(validation_errors(), false);
         $this->summernote->remove_files(xpost('content'), xpost('smt_images'), $this->img_upload_path);
         $data = $this->post_model->add();
         json_response($data);
@@ -59,8 +68,14 @@ class Posts extends Core_controller {
 
     public function edit() {
         $this->check_loggedin();
+        $this->form_validation->set_rules('id', 'ID', 'trim|required');
+        $this->form_validation->set_rules('content', 'Post', 'trim|required');
+        $this->form_validation->set_rules('smt_images', 'Images', 'trim');
+        if ($this->form_validation->run() === FALSE)
+            json_response(validation_errors(), false);
         $id = xpost('id');
         $row = $this->post_model->get_details($id);
+        //check if user post
         $this->check_userdata($row->user_id);
         $this->summernote->remove_files(xpost('content'), xpost('smt_images'), $this->img_upload_path);
         $data = $this->post_model->edit();
@@ -68,12 +83,32 @@ class Posts extends Core_controller {
     }
 
 
+    public function vote() {
+        $this->check_loggedin();
+        //ok, if poster, deny action
+        $id = xpost('id');
+        $row = $this->post_model->get_details($id);
+        if ($row->user_id == $this->session->user_id)
+            json_response('Cannot vote own post!', false);
+        $this->form_validation->set_rules('id', 'ID', 'trim|required');
+        $this->form_validation->set_rules('type', 'Type', 'trim|required');
+        if ($this->form_validation->run() === FALSE)
+            json_response(validation_errors(), false);
+        $data = $this->post_model->vote();
+        json_response($data);
+    }
+
+
     public function delete() {
         $this->check_loggedin();
+        $this->form_validation->set_rules('id', 'ID', 'trim|required');
+        if ($this->form_validation->run() === FALSE)
+            json_response(validation_errors(), false);
         $id = xpost('id');
         $row = $this->post_model->get_details($id, "p.user_id, p.can_delete, p.content");
+        //check if user post
         $this->check_userdata($row->user_id);
-        //can they delete?
+        //can i delete?
         if (!$row->can_delete)
             json_response('Action denied!', false);
         //delete post

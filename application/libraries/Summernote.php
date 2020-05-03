@@ -73,17 +73,14 @@ class Summernote {
 	 */
 	public function remove_files($textarea_content, $input_images, $path) {
 	    $extracted = $this->extract($textarea_content);
-	    $uploaded = explode('[***]', $input_images);
+	    $uploaded = strlen($input_images) ? explode('[***]', $input_images) : [];
 	    //get uploaded image files not found in summernote textfield when form is submitted
 	    $removed = array_diff($uploaded, $extracted);
 	    $count = 0;
 	    if (empty($removed)) return true;
-	    foreach($removed as $to_delete) {
+	   	foreach($removed as $to_delete) {
 	        $file_path = $path.'/'.$to_delete;
-	        if (file_exists($file_path)) {
-	            unlink($file_path);
-	            $count++;
-	        }
+	        if (unlink_file($file_path)) $count++;
 	    }
 	    return ($count == count($removed));
 	} 

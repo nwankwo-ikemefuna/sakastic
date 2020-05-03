@@ -6,26 +6,42 @@ jQuery(document).ready(function ($) {
       return `
       <div class="card">
         <div class="card-header post_info">
-          <span><i class="fa fa-user"></i> 
+          <span>
+            <img src="${row.avatar}" width="35" height="35" class="rounded-circle">
             ${ $('#user_posts').val().length == 0 ? 
               `<a class="clickable" href="${base_url}?user_posts=${row.username}">${row.username}</a>` : row.username }
-            </span>
-          <span><i class="fa fa-clock-o"></i> ${format_date(row.date_created)}</span>
+            (${row.user_votes})
+          </span>
+          <span><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</span>
           <span><i class="fa fa-thumbs-up"></i> ${row.votes}</span>
           <span><i class="fa fa-comments"></i> ${row.comment_count}</span>
         </div>
         <div class="card-body">
-          <div class="more_posts">${row.content}</div>
+          <div id="post_view_container_${row.id}">` + 
+            (row.truncated ? 
+              `<div class="post_content">
+                ${row.feat_image.length ? 
+                  `<div class="feat_image"><img src="${row.feat_image}"></div>` : ''
+                }
+                ${row.content}
+              </div>
+              <p class="mt-1">${ajax_page_link('post_view_container_'+row.id, 'posts/view_ajax/'+row.id, 'Read more', 'theme_link_red clickable text-bold', '', '', '', '', '', 0)}</p>` : 
+              `<div class="post_content">${row.content}</div>`
+            ) +
+          `</div>
           <div class="post_extra m-t-20">
-            ${row.voted == 1 ? '<small class="d-block">You upvoted this.</small>' : ''}
+            ${row.voted == 1 ? '<small class="d-block text-info">You upvoted this.</small>' : ''}
             <span class="extra"><a class="comments"><i class="fa fa-comments"></i> Comments</a></span>` + 
-            (row.voted == 1 ?
-              `<span class="extra"><a class="vote" data-vtype="post" data-id="${row.id}"><i class="fa fa-thumbs-down"></i> Downvote</a></span>` : 
-              `<span class="extra"><a class="vote" data-vtype="post" data-id="${row.id}"><i class="fa fa-thumbs-up"></i> Upvote</a></span>`
+            (row.is_user_post == 0 ?
+              (row.voted == 1 ?
+                `<span class="extra"><a class="vote" data-type="post" data-id="${row.id}"><i class="fa fa-thumbs-down text-warning"></i> Downvote</a></span>` : 
+                `<span class="extra"><a class="vote" data-type="post" data-id="${row.id}"><i class="fa fa-thumbs-up text-success"></i> Upvote</a></span>`
+              ) : 
+              ''
             ) + 
             (row.is_user_post == 1 ?
-              `<span class="extra"><a class="edit_post" data-vtype="post" data-id="${row.id}"><i class="fa fa-edit"></i> Edit</a></span>
-              <span class="extra"><a class="delete_post" data-vtype="post" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
+              `<span class="extra">${ajax_page_link('post_action_container_'+row.id, 'posts/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
+              <span class="extra"><a class="delete_post" data-type="post" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
               ''
             ) +
             `<span class="social_share">
@@ -37,6 +53,7 @@ jQuery(document).ready(function ($) {
               </span>
             </span>
           </div>
+          <div id="post_action_container_${row.id}"></div>
         </div>
       </div>`;
     }
@@ -53,15 +70,23 @@ jQuery(document).ready(function ($) {
     },
     posts_succ_callbk = function(jres) {
       //viewing user posts?
+      var count = jres.body.msg.total_rows_formatted;
       var user = $('#user_posts').val();
+      var search = $('[name="search"]').val();
+      var search_msg = `Search results for <em class="text-primary">${search}</em> (${count})`;
       if (user.length) {
-        var found = jres.body.msg.total_rows;
-        $('#posts_info').show().html(`${user == username ? 'My' : (user+"'s")} posts (${jres.body.msg.total_rows_formatted})`);
+        if (search.length) {
+          $('#posts_info').show().html(search_msg);
+        } else {
+          $('#posts_info').show().html(`${user == username ? 'My' : (user+"'s")} posts (${count})`);
+        }
       } else {
-        $('#posts_info').hide();
+        if (search.length) {
+          $('#posts_info').show().html(search_msg);
+        } else {
+          $('#posts_info').hide();
+        }
       }
-      //more or less
-      more_less('more_posts', 'theme_link_red underline-link');
     },
     posts_url = 'api/posts/list',
     elem = 'posts',
@@ -79,34 +104,83 @@ jQuery(document).ready(function ($) {
       if (jres.status) {
         show_toast(toast_title, toast_success, 'success');
         paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_succ_callbk, null, true, 'Loading');
-        more_less('more_posts', 'theme_link_red underline-link');
       } else {
         show_toast(toast_title, jres.error, 'danger');
       }
     }
 
+    //post actions: will re-render post after some action such as editing and voting, which do not affect post count
+    var do_post_action = function(url, data, container, toast_title = '', is_form_data = false, loading = false, scroll_to = true) {
+      var callback = function(jres) {
+        if (jres.status) {
+          if (toast_title.length) {
+            show_toast(toast_title, 'Successful', 'success');
+          }
+          var row = jres.body.msg;
+          //re-render updated post
+          $('#'+container).html(post_widget(row));
+          if (scroll_to) {
+            find_element('#'+container);
+          }
+        } else {
+          if (toast_title.length) {
+            show_toast(toast_title, jres.error, 'danger');
+          }
+        }
+      } 
+      post_data_ajax(base_url+url, data, is_form_data, callback, null, loading);
+    }
+
     //posting
     summernote_init('.post_summernote', {picture: true});
-    $(document).on('click', '#quick_post', function() {
-      var content = $('[name="content"]').val(),
-          smt_images = $('[name="smt_images"]').val();
-      if (!content.length || !login_restricted(login_prompt)) return false;
-      var callback = function(jres) {
+    $(document).on("submit", ".add_post_form", function(e) {
+      e.preventDefault();
+      if ($('[name="content"]').val().trim() == "" || !user_loggedin(login_prompt)) return false;
+      var callback = function (jres) {
         default_callback(jres, 'Post Notice', 'Posted successfully');
         $('[name="content"]').summernote('reset');
         $('[name="smt_images"]').val('');
       }
-      post_data_ajax(base_url+'api/posts/add', {content, smt_images}, false, callback, null, true);
+      var form_data = new FormData(this);
+      post_data_ajax(base_url+'api/posts/add', form_data, true, callback, null, true);
+    });
+
+    //reload post
+    $(document).on('click', '.reload_post', function() {
+      var type = $(this).data('type'),
+          id = $(this).data('id'),
+          container = $(this).closest('.post_container').attr('id');
+      do_post_action('api/posts/view', {type, id}, container);
+    });
+
+    //edit post
+    $(document).on("submit", ".edit_post_form", function(e) {
+      e.preventDefault();
+      var content = $(this).closest('.post_container').find('[name="content"]');
+      if (content.val().trim() == "" || !user_loggedin(login_prompt)) return false;
+      var id = $(this).data('id'),
+          container = $(this).closest('.post_container').attr('id'),
+          form_data = new FormData(this);
+      do_post_action('api/posts/edit', form_data, container, 'Edit Notice', true, true);
+    });
+
+    //voting
+    $(document).on('click', '.vote', function() {
+      if (!user_loggedin(login_prompt)) return false;
+      var type = $(this).data('type'),
+          id = $(this).data('id'),
+          container = $(this).closest('.post_container').attr('id');
+      do_post_action('api/posts/vote', {type, id}, container, 'Vote Notice', false, false, false);
     });
 
     //deleting
     $(document).on('click', '.delete_post', function() {
-      if (!login_restricted(login_prompt)) return false;
+      if (!user_loggedin(login_prompt)) return false;
       if (!confirm('Sure to delete this post?')) return false;
       var callback = function(jres) {
         default_callback(jres, 'Delete Notice', 'Post deleted successfully');
       }
-      var type = $(this).data('vtype'),
+      var type = $(this).data('type'),
           id = $(this).data('id');
       post_data_ajax(base_url+'api/posts/delete', {type, id}, false, callback, null, true);
     });
@@ -119,6 +193,7 @@ jQuery(document).ready(function ($) {
         paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_succ_callbk, null, true, 'Running search');
       }
     });
+
     //cancel
     $(document).on('click', '#cancel_search', function() {
       var search = $('[name="search"]').val();
@@ -128,36 +203,12 @@ jQuery(document).ready(function ($) {
         paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_succ_callbk, null, true, 'Applying changes');
       }
     });
+
     //sorting
     $(document).on('change', '[name="sort_by"]', function() {
       var sort_by = $(this).val();
       post_data.sort_by = sort_by;
       paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_succ_callbk, null, true, 'Applying sort');
-    });
-
-    var do_post_action = function(url, data, container, toast_title = 'Notice') {
-      var callback = function(jres) {
-        if (jres.status) {
-          show_toast(toast_title, '', 'success');
-          var row = jres.body.msg;
-          //re-render updated post
-          $('#'+container).html(post_widget(row));
-          more_less('more_posts', 'theme_link_red underline-link');
-        } else {
-          show_toast(toast_title, jres.error, 'danger');
-        }
-      } 
-      post_data_ajax(base_url+url, data, true, callback, null, true);
-    }
-
-    //voting
-    $(document).on('click', '.vote', function() {
-      if (!login_restricted(login_prompt)) return false;
-      var type = $(this).data('vtype'),
-          id = $(this).data('id'),
-          container = $(this).closest('.post_container').attr('id');
-      console.log('container', container);
-      do_post_action('api/posts/vote', {type, id}, container, 'Vote Notice');
     });
 
     //reveal share butts

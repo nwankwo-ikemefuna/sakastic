@@ -39,6 +39,8 @@ modal_footer(false);
 <script src="<?php echo base_url(); ?>vendors/selectpicker/js/bootstrap-select.min.js" type="text/javascript"></script>
 <!-- Summernote-->
 <script src="<?php echo base_url(); ?>vendors/summernote/summernote-bs4.min.js" type="text/javascript"></script>
+<!-- TimeAgo-->
+<script src="<?php echo base_url(); ?>vendors/timeago.js" type="text/javascript"></script>
         
 <!-- General Custom scripts -->
 <script src="<?php echo base_url(); ?>assets/common/js/showmore.js"></script>
@@ -68,8 +70,7 @@ load_scripts($this->page_scripts, 'assets/web/js');
         $(document).on('click', '#header_post_btn', function(){
             //homepage?
             if (current_page == 'home') {
-                var pos = $('#post_section').position().top;
-                $('html').scrollTop(pos);
+                find_element('#post_section');
             } else {
                 location.href = base_url;
             }

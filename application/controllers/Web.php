@@ -26,7 +26,7 @@ class Web extends Core_controller {
             $data['user_posts'] = '';
         }
         $this->web_header($page_title);
-        $this->load->view('web/index', $data);
+        $this->load->view('posts/index', $data);
         $this->web_footer('home');
     }
 

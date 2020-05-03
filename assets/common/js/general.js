@@ -131,7 +131,7 @@ jQuery(document).ready(function ($) {
 
 });
 
-function login_restricted(false_callback) {
+function user_loggedin(false_callback) {
     if (is_loggedin) return true;
     if (typeof false_callback === 'function') {
         false_callback();
@@ -186,6 +186,11 @@ function image_exists(url){
     http.open('HEAD', url, false);
     http.send();
     return http.status != 404;
+}
+
+function find_element(selector, parent = 'html') {
+    var pos = $(selector).position().top;
+    $(parent).scrollTop(pos);
 }
 
 function rating_stars(rating) {
@@ -291,4 +296,38 @@ function show_toast(title, msg = 'All done!', type = 'info', container ='body', 
         delay: delay*1000,
         pause_on_hover: true
     });
+}
+
+function ajax_page_link(container, url, html = '', x_class = '', title = '', icon = '', attrs = '', id = '', callback = '', loading = 1, loading_text = '') { 
+    var id_attr = id.length ? `id=${id}` : '';
+    var html = (icon.length ? `<i class="fa fa-${icon}"></i> ` : '') + html;
+    var btn = `<a 
+        data-container='${container}' 
+        data-url='${url}'
+        class='tload_ajax ${x_class}' 
+        data-callback='${callback}' 
+        data-loading='${loading}' 
+        data-loading_text='${loading_text}'
+        title='${title}'
+        ${id_attr} ${attrs}>
+        ${html}
+    </a>`;
+    return btn;
+}
+
+function ajax_page_button(container, url, html = '', x_class = '', title = '', icon = '', attrs = '', id = '', callback = '', loading = 1, loading_text = '') { 
+    var id_attr = id.length ? `id=${id}` : '';
+    var html = (icon.length ? `<i class="fa fa-${icon}"></i> ` : '') + html;
+    var btn = `<button 
+        data-container='${container}' 
+        data-url='${url}'
+        class='tload_ajax btn ${x_class}' 
+        data-callback='${callback}' 
+        data-loading='${loading}' 
+        data-loading_text='${loading_text}'
+        title='${title}'
+        ${id_attr} ${attrs}>
+        ${html}
+    </button>`;
+    return btn;
 }

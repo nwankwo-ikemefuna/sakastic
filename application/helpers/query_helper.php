@@ -45,8 +45,8 @@ function price_select($code_col, $price_col, $alias = 'amount', $precision = 0) 
 	return "CONCAT('&#', {$code_col}, ';', CONVERT(FORMAT({$price_col}, {$precision}) using utf8)) AS {$alias}";
 }
 
-function file_select($path, $file_dir_col, $file_col, $alias = 'file', $default = null) {
-	return "CONCAT('{$path}', '/', {$file_dir_col}, '/', {$file_col}) AS {$alias}";
+function file_select($path, $file_col, $alias = 'file', $default = null) {
+	return "CONCAT('{$path}', '/', {$file_col}) AS {$alias}";
 }
 
 function find_in_set_mult($params, $field) {

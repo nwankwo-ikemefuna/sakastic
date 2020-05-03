@@ -1,10 +1,8 @@
-<div class="smt_wrapper" id="post_section">
+<div id="post_section">
     <h5>What's funny?</h5>
     <?php
-    xform_input('content', 'textarea', '', true, ['rows' => 3, 'class' => 'post_summernote', 'data-placeholder' => 'What is on your mind?', 'data-height' => 100]);
-    xform_help(['help' => 'Note: Images above 100KB will not be uploaded.']);
-    xform_submit('Post It', '', ['id' => 'quick_post', 'class' => 'btn-primary clickable m-t-10']); 
-    $this->summernote->config('posts', 100); ?>
+    $ajax_page = 'add';
+    require 'adit.php'; ?>
 </div>
 
 <div class="row m-t-20 m-b-20">
@@ -13,9 +11,9 @@
             <span class="input-group-prepend">
                 <button type="button" id="cancel_search" class="btn " title="Cancel search"><i class="fa fa-remove"></i></button>
             </span>
-            <input type="text" name="search" class="form-control" value="<?php echo urldecode(xget('search')); ?>" placeholder="Search posts">
+            <input type="text" name="search" class="form-control" value="<?php echo urldecode(xget('search')); ?>" placeholder="what are you looking for?">
             <span class="input-group-append">
-                <button type="button" id="search_posts" class="btn" title="what are you looking for?"><i class="fa fa-search"></i></button>
+                <button type="button" id="search_posts" class="btn" title="Search posts"><i class="fa fa-search"></i></button>
             </span>
         </div>
     </div>

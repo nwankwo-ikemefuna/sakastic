@@ -101,14 +101,6 @@ jQuery(document).ready(function ($) {
         selectfield_name = $(this).data('selectfield');
     });
 
-
-    //on click of sidebar ajax page link on mobile screen, close menu wrapper
-    $(document).on( "click", ".tload_ajax", function() {
-        if ($('body').hasClass('fixed-body')) {
-            $('#sidebar-menu-toggle')[0].click();
-        }
-    });
-
 });
 
 function get_select_options(url, selectfield, current_val) {
