@@ -158,5 +158,28 @@ class Crud {
         }
         json_response_db();
     }
+
+
+    public function vote($votes, $voters) { 
+        $voters = (array) split_us($voters);
+        //already voted?
+        if ( ! in_array($this->ci->session->user_id, $voters)) {
+            //nah, happy voting
+            $voters[] = $this->ci->session->user_id;
+            $votes = $votes + 1;
+        } else {
+            //voted, unvote
+            $key = array_search($this->ci->session->user_id, $voters);
+            unset($voters[$key]);
+            $voters = array_values($voters); //re-index keys
+            $votes = $votes - 1;
+        }
+        //update posts
+        $data = [
+            'votes' => $votes,
+            'voters' => join_us($voters)
+        ];
+        return $data;
+    }
     
 }

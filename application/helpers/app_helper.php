@@ -220,3 +220,21 @@ function rating_stars($rating) {
     }
     return '<span class="rating">'.$rated.$unrated.'</span>';
 }
+
+function shorten_number($number) {
+    switch (true) {
+        //1M+
+        case ($number >= 1000000):
+            $num = round($number/1000000, 1).'M';
+            break;
+        //1K - 999k
+        case ($number >= 1000):
+            $num = round($number/1000, 1).'K';
+            break;
+        // < 1000
+        default:
+            $num = $number;
+            break;
+    }
+    return $num;
+}

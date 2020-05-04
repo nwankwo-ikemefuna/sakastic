@@ -1,14 +1,9 @@
-<div class="text-center">
-	<?php flash_message('error_msg', 'danger'); ?>
-    <h2 class="text-bold text-danger">Forbidden!</h2>
-    <p class="p-b-10"></p>
-    <div>
-    	<?php 
-		//coming from portal?
-		if ($referrer == 'portal') {
-	        ajax_page_button('user', 'Save Me!', 'btn-info btn-rounded btn-lg');
-	    } else { ?>
-	    	<a href="<?php echo base_url(); ?>" class="btn btn-info btn-rounded btn-lg">Go Back</a>
-	    <?php } ?>
+<div class="row">
+    <div class="col-12 col-md-6 offset-md-3">
+        <h4 class="bar_title"><?php echo $page_title; ?></h4>
+        <div class="text-center">
+        	The page you tried to access is out of bounds.
+        	<p class="mt-1"><a class="btn btn-primary" href="<?php echo base_url(); ?>">Take Me Home</a></p>
+        </div>
     </div>
 </div>

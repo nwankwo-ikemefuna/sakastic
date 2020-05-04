@@ -20,7 +20,7 @@ class Auth {
 
         $username = xpost($username_key);
         $password = xpost('password');
-        $row = $this->ci->common_model->get_row(T_USERS, $username, $username_key);
+        $row = $this->ci->user_model->get_details($username, $username_key, [], "id, password");
 		//user exists, is not trashed, and password is correct...
         if ($row && password_verify($password, $row->password)) {
         	$this->ci->session->set_userdata($this->login_data($row->id));
@@ -32,8 +32,7 @@ class Auth {
 
 
     public function login_data($id) {
-    	$sql = $this->ci->user_model->sql();
-		$row = $this->ci->common_model->get_row($sql['table'], $id, 'id', 0, $sql['joins'], $sql['select'], $sql['where']);
+    	$row = $this->ci->user_model->get_details($id, 'id', ['all']);
 		$fields = $tables = $this->ci->db->list_fields(T_USERS);
 		$data = [];
 		if ( ! $row) return;

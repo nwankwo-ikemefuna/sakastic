@@ -1,12 +1,12 @@
 <?php
 defined('BASEPATH') or die('Direct access not allowed');
 
-class Posts extends Core_controller {
+class Comments extends Core_controller {
     public function __construct() {
         parent::__construct();
         //controller library
         $this->img_upload_path = 'uploads/images/posts';
-        $params = ['type' => 'post', 'upload_path' => $this->img_upload_path];
+        $params = ['type' => 'comment', 'upload_path' => $this->img_upload_path];
         $this->load->library('controllers/post_lib', $params);
     }
 

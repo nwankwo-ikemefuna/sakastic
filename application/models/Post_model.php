@@ -7,23 +7,65 @@ class Post_model extends Core_Model {
 	}
 
 
-	public function sql($where = [], $select = "") {
-		$select = strlen($select) ? $select : "p.*, u.username, 
-			u.votes AS user_votes, COUNT(c.post_id) AS comment_count, 
-			IF(FIND_IN_SET('{$this->session->user_id}', `p`.`voters`), 1, 0) AS voted,
-			IF(p.user_id = '{$this->session->user_id}', 1, 0) AS is_user_post";
-		$select .= ", '".base_url(AVATAR_GENERIC)."' AS avatar";
-		$joins = [
-			T_USERS.' u' => ['u.id = p.user_id'],
-			T_COMMENTS.' c' => ['c.post_id = p.id']
-		];
-		return sql_data(T_POSTS.' p', $joins, $select, $where);
-	}
-
-
-	public function get_details($id, $select = "", $trashed = 0) {
-		$sql = $this->sql([], $select);
-		return $this->get_row($sql['table'], $id, 'id', $trashed, $sql['joins'], $sql['select']);
+	public function sql($type, $to_join = [], $select = "*", $where = []) {
+		$alias = $type[0]; //p OR c
+		$arr = sql_select_arr($select);
+		$select =  $select != '*' ? $arr['main'] : "{$alias}.*";
+		if ($type == 'post') {
+			$select .= join_select($arr, 'comment_count', "COUNT(c.post_id)");
+		}
+		$select .= join_select($arr, 'username', "u.username");
+		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
+		$select .= join_select($arr, 'user_posts', "IFNULL(up.user_posts, 0)");
+		$select .= join_select($arr, 'user_comments', "IFNULL(uc.user_comments, 0)");
+		$select .= join_select($arr, 'voted', "IF(FIND_IN_SET('{$this->session->user_id}', `{$alias}`.`voters`), 1, 0)");
+		$select .= join_select($arr, 'is_user_post', "IF({$alias}.user_id = '{$this->session->user_id}', 1, 0)");
+		$select .= join_select($arr, 'avatar', "'".base_url(AVATAR_GENERIC)."'");
+		$joins = [];
+		if ($type == 'post') {
+			//comments
+			if (in_array('c', $to_join) || in_array('all', $to_join)) {
+				$joins = array_merge($joins, 
+					[T_COMMENTS.' c' => ['c.post_id = p.id']]
+				);
+			}
+		}
+		//users
+		if (in_array('u', $to_join) || in_array('all', $to_join)) {
+			$joins = array_merge($joins, 
+				[T_USERS.' u' => ["u.id = {$alias}.user_id"]]
+			);
+		}
+		//user posts and votes
+		if (in_array('up', $to_join) || in_array('all', $to_join)) {
+			$joins = array_merge($joins, 
+				["(
+					SELECT `p`.`user_id`, 
+						COUNT(`p`.`user_id`) AS user_posts, 
+						SUM(`p`.`votes`) AS user_votes
+				    FROM `".T_USERS."` `u`
+				    LEFT JOIN `".T_POSTS."` `p` ON 
+				    	`p`.`user_id` = `u`.`id`
+				    GROUP BY `p`.`user_id`
+				) `up`" => ["`up`.`user_id` = `u`.`id`", 'left', false]]
+			);
+		}
+		//user comments and votes
+		if (in_array('uc', $to_join) || in_array('all', $to_join)) {
+			$joins = array_merge($joins, 
+				["(
+					SELECT `c`.`user_id`, 
+						COUNT(`c`.`user_id`) AS user_comments, 
+						SUM(`c`.`votes`) AS user_votes
+				    FROM `".T_USERS."` `u`
+				    LEFT JOIN `".T_COMMENTS."` `c` ON 
+				    	`c`.`user_id` = `u`.`id`
+				    GROUP BY `c`.`user_id`
+				) `uc`" => ["`uc`.`user_id` = `u`.`id`", 'left', false]]
+			);
+		}
+		$table = $type.'s '.$alias; //posts p OR comments c
+		return sql_data($table, $joins, $select, $where);
 	}
 
 
@@ -57,15 +99,22 @@ class Post_model extends Core_Model {
     }
 
 
-	public function get_posts($where = [], $select = "", $trashed = 0, $limit = '', $offset = 0) {
-		$sql = $this->sql($where, $select);
+	public function get_details($type, $id, $by = 'id', $to_join = [], $select = "*", $trashed = 0) {
+		$sql = $this->sql($type, $to_join, $select);
+		return $this->get_row($sql['table'], $id, $by, $trashed, $sql['joins'], $sql['select']);
+	}
+
+
+	public function get_record_list($type, $to_join, $select = "*", $where = [], $limit = '', $offset = 0) {
+		$sql = $this->sql($type, $to_join, $select, $where);
 		$order = strlen(xpost('sort_by')) ? $this->sort(xpost('sort_by')) : $sql['order'];
-		$posts = $this->get_rows($sql['table'], $trashed, $sql['joins'], $sql['select'], $where, $order, $sql['group_by'], $limit, $offset);
+		$posts = $this->get_rows($sql['table'], 0, $sql['joins'], $sql['select'], $where, $order, $sql['group_by'], $limit, $offset);
 		return $this->prepare_posts($posts);
 	}
 
 
 	private function prepare_posts($posts) {
+		// last_sql(); die;
         $data = [];
         $posts = is_array($posts) ? $posts : (array) $posts;
         foreach ($posts as $row) {
@@ -83,6 +132,7 @@ class Post_model extends Core_Model {
     	//remove all tags from content and truncate to some words
     	$raw_content = strip_tags($row['content']);
     	$max = 30;
+    	//if post has at least 1 image or words > $max, we truncate
     	if ($extracted || str_word_count($raw_content) > $max) {
     		$truncated = true;
     		$content = word_limiter($raw_content, $max);
@@ -92,8 +142,15 @@ class Post_model extends Core_Model {
     		$truncated = false;
     		$content = $row['content'];
     	}
+    	//remove things we don't need
+    	unset($row['voters']);
     	$data = array_merge($row, 
     		[
+    			'votes' => shorten_number($row['votes']), 
+    			'user_votes' => shorten_number($row['user_votes']), 
+    			'user_posts' => shorten_number($row['user_posts']), 
+    			'user_comments' => shorten_number($row['user_comments']), 
+    			'comment_count' => shorten_number($row['comment_count']), 
     			'truncated' => $truncated, 
     			'content' => $content, 
     			'feat_image' => $feat_image
@@ -101,88 +158,6 @@ class Post_model extends Core_Model {
     	);
         return $data;
     }
-
-
-	public function count_all($where = [], $trashed = 0) {
-		return $this->count_rows(T_POSTS.' p', $where, $trashed);
-	}
-
-
-	private function data() {
-		$data = [
-			'user_id' => $this->session->user_id,
-			'content' => ucfirst(xpost_txt('content'))
-		];
-		return $data;
-	}
-
-
-	public function add() { 
-		$data = $this->data();
-		$id = $this->insert(T_POSTS, $data);
-		$row = $this->get_details($id);
-		return $row;
-	}
-
-
-	public function edit() { 
-		$id = xpost('id');
-		$data = $this->data();
-		$this->update(T_POSTS, $data, ['id' => xpost('id')]);
-		$row = $this->get_details($id);
-		//return prepared post
-		return $this->prepare_post($row);
-	}
-
-
-	private function type_data($type, $id) { 
-		//post or comment?
-		if ($type == 'post') {
-			$table = 'posts';
-			$row = $this->get_details($id, "p.user_id, p.votes, p.voters");
-		} else {
-			$table = 'comments';
-			$row = $this->comment_model->get_details($id, "c.user_id, c.votes, c.voters");
-		}
-		$data = ['table' => $table, 'row' => $row];
-		return $data;
-	}
-
-
-	public function vote() { 
-		$type = xpost('type');
-		$id = xpost('id');
-		$t_data = $this->type_data($type, $id);
-		$table = $t_data['table'];
-		$row = $t_data['row'];
-		$user_votes = $this->user_model->get_details($row->user_id, "u.votes")->votes;
-		$voters = (array) split_us($row->voters);
-		//already voted?
-		if ( ! in_array($this->session->user_id, $voters)) {
-			//nah, happy voting
-			$voters[] = $this->session->user_id;
-			$votes = $row->votes + 1;
-			$user_votes += 1;
-		} else {
-			//voted, unvote
-			$key = array_search($this->session->user_id, $voters);
-			unset($voters[$key]);
-			$voters = array_values($voters);
-			$votes = $row->votes - 1;
-			$user_votes -= 1;
-		}
-		//update posts
-		$data = [
-			'votes' => $votes,
-			'voters' => join_us($voters)
-		];
-		$this->update($table, $data, ['id' => $id]);
-		//update user votes
-		$this->update(T_USERS, ['votes' => $user_votes], ['id' => $row->user_id]);
-		//get updated record and return prepared post
-		$row = $this->get_details($id);
-		return $this->prepare_post($row);
-	}
 
 	
 }

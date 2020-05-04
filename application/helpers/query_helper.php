@@ -3,6 +3,28 @@ function sql_data($table, $joins, $select, $where, $order = [], $group_by = '') 
 	return ['table' => $table, 'joins' => $joins, 'select' => $select, 'where' => $where, 'order' => $order, 'group_by' => $group_by];
 }
 
+function sql_select_arr($select) {
+	//eg sample string: p.content, p.user_id ## avatar, comment_count
+	//content and user_id are from main table while...
+	//avatar and comment_count are from joined tables
+	if ($select == '*' || ! preg_match('/##/', $select)) 
+		return ['main' => $select, 'joins' => []];
+	//do we have fields from joined tables => anything right of ## in select?
+	$parts = array_map('trim', (array) split_us($select, '##'));
+	$main = $parts[0];
+	$joins = array_map('trim', (array) split_us($parts[1]));
+	$arr = ['main' => $main, 'joins' => $joins];
+	return $arr;
+}
+
+function join_select($arr, $key, $statement) {
+	$select = "";
+	if ($arr['main'] == '*' || in_array($key, $arr['joins'])) {
+		$select = ", {$statement} AS {$key}";
+	}
+	return $select;
+}
+
 function full_name_select($table_alias = '', $with_alias = true, $alias = 'full_name', $prefix = '', $affix = '') {
 	$tbl_alias = strlen($table_alias) ? "{$table_alias}." : '';
 	//individual names

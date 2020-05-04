@@ -23,7 +23,7 @@ define('EDIT', 3);
 define('DEL', 4);
 
 define('SITE_NAME', 'Sakastic');
-define('SITE_DESCRIPTION', 'Allow yourself some fun');
+define('SITE_DESCRIPTION', 'Just for fun');
 define('SITE_LOGO', 'assets/common/img/logo/logo.png');
 define('SITE_FAVICON', 'assets/common/img/logo/favicon.png');
 define('IMAGE_404', 'assets/common/img/icons/not_found.png');

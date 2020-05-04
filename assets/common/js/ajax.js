@@ -376,61 +376,6 @@ function paginate_data(url, elem, row_render, paginate_elem = 'pagination', page
     });
 }
 
-function status_box(elem, msg, type = 'success', elem_type = 'class', delay = 10000) {
-    var status_div = 
-    `<div class="alert alert-${type} alert-dismissible" role="alert">
-        ${msg}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close" title="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>`;
-    elem = elem_type == 'id' ? ('#'+elem) : ('.'+elem);
-    $(elem).html(status_div)
-        .fadeIn( 'fast' )
-        .delay( delay )
-        .fadeOut( 'slow' );
-}
-
-function check_loading(start, after, html) {
-    var now = new Date();
-    var time_diff = (now - start) / 1000; //in ms
-    var time_secs = Math.round(time_diff);
-    if (time_secs > after) {
-        $('#ajax_overlay_loader #overlay_text').html(html);
-    }
-}
-
-function ajax_loading_show(show, loading_msg) {
-    if (show) {
-        //any other one open?
-        var start;
-        if ($('#ajax_overlay_loader').is(':visible') == false) {
-            start = new Date();
-            $('#ajax_overlay_loader #overlay_text').text(loading_msg+'...');
-            $('#ajax_overlay_loader').show();
-        }
-        /*if ($('#ajax_overlay_loader').is(':visible') == true) {
-            //stayed for 5+ seconds?
-            check_loading(start, 5, 'Still trying to complete errand. Please wait');
-            //for 10+ seconds?
-            check_loading(start, 10, loading_msg+'...Please wait');
-            //for 15+ seconds? may day!
-            var final_check = `
-                Unable to complete request. <br />
-                <button class="btn btn-secondary btn-sm" onclick="${ajax_loading_hide()}">Close</button>
-            `;
-            check_loading(start, 15, final_check);
-        }*/
-    }
-}
-
-function ajax_loading_hide() {
-    if ($('#ajax_overlay_loader').is(':visible') == true) {
-        $('#ajax_overlay_loader').hide();
-        $('#ajax_overlay_loader #overlay_text').text('');
-    }
-}
-
 function load_page_ajax_def() {
     $(document).on('click', '.tload_ajax', function(e) {
         e.preventDefault();
@@ -471,31 +416,4 @@ function load_page_ajax(url, callback = null, delay = 3, container = 'ajax_page_
             ajax_loading_hide();
         });
     }, delay*1000);
-}
-
-/**
- * [fill_form_fields: fill fields with names matching the data keys]
- * @param  {[string]} form_id
- * @param  {[object]} data
- * @return {[void]}
- */
-function fill_form_fields(form_id, data, exclude = []) {
-    var inputs = $('form#'+form_id+' :input');
-    $.each(inputs, (i, input) => {
-        var name = $(input).attr('name');
-        //exclude us please...
-        if ($.inArray(name, exclude) !== -1) return;
-        if (typeof name !== "undefined") {
-            var val = data[name];
-            var field = $('#'+form_id).find(':input[name="' + name + '"]');
-            //get input type or tagname if type is undefined (eg select, textarea)
-            var type = field.attr('type') || field.prop('tagName').toLowerCase();
-            if (type == 'select' || type == 'checkbox' || type == 'radio') {
-                //we need to call change event on these guys
-                field.val(val).change();
-            } else {
-                field.val(val);
-            }
-        }
-    });
 }

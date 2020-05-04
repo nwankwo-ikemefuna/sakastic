@@ -1,11 +1,11 @@
 <?php
 defined('BASEPATH') or die('Direct access not allowed');
 
-class Posts extends Core_controller {
+class Comments extends Core_controller {
     public function __construct() {
         parent::__construct();
         //controller library
-        $params = ['type' => 'post'];
+        $params = ['type' => 'comment'];
         $this->load->library('controllers/post_lib', $params);
         $this->page_scripts = ['posts'];
     }
@@ -14,6 +14,12 @@ class Posts extends Core_controller {
     public function index() {
         //take me home
         redirect('');
+    }
+
+
+    public function list_ajax($id) {
+        $data['id'] = $id;
+        $this->load->view('posts/comments/index', $data);
     }
 
 

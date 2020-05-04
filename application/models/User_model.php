@@ -7,20 +7,38 @@ class User_model extends Core_Model {
 	}
 
 
-	public function sql($where = [], $select = "") {
-		$select = strlen($select) ? $select : "u.*";
-		return sql_data(T_USERS.' u', [], $select, $where);
+	public function sql($to_join = [], $select = "", $where = []) {
+		$arr = sql_select_arr($select);
+		$select =  $select != '*' ? $arr['main'] : "u.*";
+		$select .= join_select($arr, 'user_posts', "COUNT(p.user_id)");
+		$select .= join_select($arr, 'user_comments', "COUNT(c.user_id)");
+		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(p.votes, 0) + IFNULL(c.votes, 0))");
+		$select .= join_select($arr, 'avatar', "'".base_url(AVATAR_GENERIC)."'");
+		$joins = [];
+		//posts
+		if (in_array('p', $to_join) || in_array('all', $to_join)) {
+			$joins = array_merge($joins, 
+				[T_POSTS.' p' => ['p.user_id = u.id']]
+			);
+		}
+		//comments
+		if (in_array('c', $to_join) || in_array('all', $to_join)) {
+			$joins = array_merge($joins, 
+				[T_COMMENTS.' c' => ['c.user_id = u.id']]
+			);
+		}
+		return sql_data(T_USERS.' u', $joins, $select, $where);
 	}
 
 
-	public function get_details($id, $select = "", $trashed = 0) {
-		$sql = $this->sql(['id' => $id], $select);
-		return $this->get_row($sql['table'], $id, 'id', $trashed, $sql['joins'], $sql['select'], [], $sql['group_by']);
+	public function get_details($id, $by = 'id', $to_join = [], $select = "", $trashed = 0) {
+		$sql = $this->sql($to_join, $select);
+		return $this->get_row($sql['table'], $id, $by, $trashed, $sql['joins'], $sql['select'], [], $sql['group_by']);
 	}
 
 
-	public function get_all($select = "", $trashed = 0) {
-		$sql = $this->sql($where, $select);
+	public function get_all($to_join = [], $select = "", $where = [], $trashed = 0) {
+		$sql = $this->sql($to_join, $select, $where);
 		return $this->get_rows($sql['table'], $trashed, $sql['joins'], $sql['select'], $sql['where'], $sql['order'], $sql['group_by']);
 	}
 

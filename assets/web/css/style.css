@@ -1,6 +1,9 @@
 body {
     background: #f2f2f2;
 }
+.text-success {
+  color: #51865d!important;
+}
 .page_body {
   /*ensure footer stays at bottom*/
   min-height: calc(100vh - 150px);  
@@ -142,6 +145,13 @@ body {
   border-right: none;
   padding-right: 0;
   margin-right: 0;
+}
+.post_info .user_stats {
+  margin-left: 5px;
+  cursor: pointer;
+}
+.post_info .user_stats i {
+  font-size: 12px;
 }
 .post_extra a {
   cursor: pointer;

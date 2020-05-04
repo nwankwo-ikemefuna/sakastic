@@ -44,8 +44,9 @@ class Account extends Core_controller {
         $reset_code = hash('sha512', mt_rand(1111111111, 9999999999));
         $data = ['password_reset_code' => $reset_code];
         $this->common_model->update(T_USERS, $data, ['email' => xpost('email')]);
-        $sql = $this->user_model->sql([], "u.username");
-        $row = $this->user_model->get_row($sql['table'], $email, 'email', 0, $sql['joins'], $sql['select']);
+        $row = $this->user_model->get_details($email, 'email', [], "username");
+        if (!$row) 
+            json_response('We can\'t find you!', false);
         //send email
         $reset_url = base_url('account/reset_pass/'.$row->username.'/'.$reset_code);
         $anchor_link = email_call2action_blue($reset_url, 'Reset Password');
