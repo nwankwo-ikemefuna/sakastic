@@ -8,10 +8,16 @@ echo form_open(NULL, $form_attributes);
 	<div class="smt_wrapper">
 		<?php
 		xform_input('content', 'textarea', adit_value($row, 'content'), false, ['rows' => 5, 'class' => 'post_summernote', 'data-height' => 150]);
-		$this->summernote->config('posts', 100, 'smt_images', adit_value($row, 'content')); ?>
+		$this->summernote->config([
+			'path' => 'posts', 
+			'size' => 100, 
+			'resize_width' => 100, 
+			'resize_height' => 100,
+			'content' => adit_value($row, 'content')
+		]); ?>
 	</div>
 	<?php
-	xform_help(['help' => 'Note: Images above 100KB will not be uploaded.']); ?>
+	xform_help(['help' => 'Note: Images above 100kb will not be uploaded.']); ?>
 	<div class="form-group m-t-10">
 		<button type="submit" class="btn-primary clickable"><?php echo $ajax_page == 'add' ? 'Post It' : 'Update'; ?></button>
 		<?php

@@ -12,7 +12,11 @@ class Comments extends Core_controller {
 
 
     public function list($page = 0) {
-        $this->post_lib->list($page);
+        $where = [
+            'c.post_id' => xpost('post_id'), 
+            'c.parent_id' => xpost('comment_id')
+        ];
+        $this->post_lib->list($where, $page);
     }
 
 

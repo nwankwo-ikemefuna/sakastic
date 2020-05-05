@@ -16,31 +16,11 @@ class Post_lib {
     }
 
 
-    private function filter() {
-        $where = [];
-        //user posts?
-        $username = xpost('user');
-        if (strlen($username)) {
-            //does the user even exists?
-            $row = $this->ci->user_model->get_details($username, 'username', [], "id");
-            if ($row) {
-                $where = ['p.user_id' => $row->id];
-            }
-        }
-        //searching?
-        if (strlen(xpost('search'))) {
-            $this_where = $this->ci->post_model->search();
-            $where = array_merge($where, [$this_where => null]);
-        } 
-        return $where;
-    }
-
-
-    public function list($page) {
+    public function list($where, $page) {
         $per_page = 3;
         $page = paginate_offset($page, $per_page);
-        $where = $this->filter();
         $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, $per_page, $page);
+        // last_sql(); die;
         $total_records = $this->ci->common_model->count_rows($this->table_with_alias, $where);
         $data = paginate($records, $total_records, $per_page, "api/{$this->type}s/list");
         json_response($data);
@@ -69,6 +49,14 @@ class Post_lib {
         $this->ci->form_validation->set_rules('smt_images', 'Images', 'trim');
         if ($this->ci->form_validation->run() === FALSE)
             json_response(validation_errors(), false);
+        $content = xpost('content');
+        $raw_content = strip_tags($content);
+        //TODO: prevent image only content
+        $extracted = $this->ci->summernote->extract($content);
+        if (!strlen($raw_content)) {
+            json_response('You may have forgotten to type something.', false);
+        }
+        //delete images uploaded but where removed from the content field
         $this->ci->summernote->remove_files(xpost('content'), xpost('smt_images'), $this->img_upload_path);
         $data = [
             'user_id' => $this->ci->session->user_id,

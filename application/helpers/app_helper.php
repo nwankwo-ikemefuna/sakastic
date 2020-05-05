@@ -65,6 +65,15 @@ function shuffle_string_case($str) {
     return $str;
 }
 
+function str_lreplace($search, $replace, $subject) {
+    //replace last occurrence of a character
+    $pos = strrpos($subject, $search);
+    if($pos !== false) {
+        $subject = substr_replace($subject, $replace, $pos, strlen($search));
+    }
+    return $subject;
+}
+
 function time_ago($time, $units = 1) { //return time in ago
     //add mysql-server time difference to time;
     $time_diff = 0;

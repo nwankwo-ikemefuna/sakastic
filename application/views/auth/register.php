@@ -8,7 +8,7 @@
             'class' => 'ajax_form', 
             'data-type' => 'redirect', 
             'data-redirect' => $redirect_url, 
-            'data-msg' => "Login successful. Redirecting... <p>If you are not automatically redirected, <a href='{$redirect_url}'>click here</a></p>"
+            'data-msg' => "Registration successful. Redirecting... <p>If you are not automatically redirected, <a href='{$redirect_url}'>click here</a></p>"
         ];
         echo form_open('api/account/register', $attrs);
             xform_group_list('Email', 'email', 'email', '', true, ['id' => 'signup_email']);

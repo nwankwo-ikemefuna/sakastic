@@ -28,29 +28,21 @@ function load_scripts(array $scripts, $path) {
 
 function xpost($field, $default = NULL, $xss_clean = TRUE) {
 	$ci =& get_instance();
-	$data = !empty($ci->input->post($field, $xss_clean)) ? $ci->input->post($field, $xss_clean) : $default;
+    $data = $ci->input->post($field, $xss_clean);
+    $data = ($data == 0 || !empty($data)) ? $data : $default;
 	return $data;
 }
 
 function xpost_txt($field, $default = NULL, $xss_clean = TRUE) {
 	$ci =& get_instance();
-	$data = !empty($ci->input->post($field, $xss_clean)) ? nl2br_except_pre(ucfirst($ci->input->post($field, $xss_clean))) : $default;
+    $data = $ci->input->post($field, $xss_clean);
+    $data = ($data == 0 || !empty($data)) ? nl2br_except_pre(ucfirst($data)) : $default;
 	return $data;
 }
 
 function xget($field, $xss_clean = TRUE) {
 	$ci =& get_instance();
 	return $ci->input->get($field, $xss_clean);
-}
-
-function xpostget($field, $xss_clean = TRUE) {
-	$ci =& get_instance();
-	return $ci->input->post_get($field, $xss_clean);
-}
-
-function xgetpost($field, $xss_clean = TRUE) {
-	$ci =& get_instance();
-	return $ci->input->get_post($field, $xss_clean);
 }
 
 function query_param($key, $val) {

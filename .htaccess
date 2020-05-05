@@ -1,3 +1,5 @@
+Options -Indexes
+
 RewriteEngine on
 
 #SSL: uncomment these 2 lines if SSL is allowed

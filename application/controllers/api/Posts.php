@@ -11,8 +11,29 @@ class Posts extends Core_controller {
     }
 
 
+    private function filter() {
+        $where = [];
+        //user posts?
+        $username = xpost('user');
+        if (strlen($username)) {
+            //does the user even exists?
+            $row = $this->ci->user_model->get_details($username, 'username', [], "id");
+            if ($row) {
+                $where = ['p.user_id' => $row->id];
+            }
+        }
+        //searching?
+        if (strlen(xpost('search'))) {
+            $this_where = $this->ci->post_model->search();
+            $where = array_merge($where, [$this_where => null]);
+        } 
+        return $where;
+    }
+
+
     public function list($page = 0) {
-        $this->post_lib->list($page);
+        $where = $this->filter();
+        $this->post_lib->list($where, $page);
     }
 
 

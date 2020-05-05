@@ -30,7 +30,6 @@ body {
 }
 .pagination-area {
   background: rgba(0,0,0,0) none repeat scroll 0 0;
-  padding-top: 20px;
   display: inline-block;
   width: 100%
 }
@@ -141,7 +140,7 @@ body {
 .disclaimer {
   font-size: 16px;
 }
-.post_info span:last-child {
+.post_info span:last-child, .post_extra .extra:last-child {
   border-right: none;
   padding-right: 0;
   margin-right: 0;
@@ -151,7 +150,11 @@ body {
   cursor: pointer;
 }
 .post_info .user_stats i {
-  font-size: 12px;
+  font-size: 9px;
+}
+.post_extra .d_icon {
+  font-size: 9px;
+  margin-left: 5px;
 }
 .post_extra a {
   cursor: pointer;
@@ -194,9 +197,16 @@ body {
 .post_action_container {
   padding: 15px 0;
 }
-.post_container .feat_image img {
+.post_content img {
+  max-width: 100%;
+}
+.post_content img.img_thumb {
   width: 90px;
   height: auto;
-  float: right;
-  margin-left: 20px;
+}
+.card_header_post {
+  background: #b3d7ff54;
+}
+.card_header_comment {
+  background: #b3d7ff17;
 }

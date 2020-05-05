@@ -11,7 +11,7 @@ echo form_open(NULL, $form_attributes);
 		$this->summernote->config('posts', 100, 'smt_images', adit_value($row, 'content')); ?>
 	</div>
 	<?php
-	xform_help(['help' => 'Note: Images above 100KB will not be uploaded.']); ?>
+	xform_help(['help' => 'Note: Images above 100kb will not be uploaded.']); ?>
 	<div class="form-group m-t-10">
 		<button type="submit" class="btn-primary clickable"><?php echo $ajax_page == 'add' ? 'Post It' : 'Update'; ?></button>
 		<?php

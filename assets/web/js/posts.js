@@ -2,13 +2,14 @@ jQuery(document).ready(function ($) {
   "use strict"; 
 
   var post_widget = function(row, type = 'post') {
-    var post_url = base_url+'posts/view/'+row.id;
-    var controller = type+'s';
+    var post_url = base_url+'posts/view/'+row.id,
+      controller = type+'s',
+      pc_id = row.post_id+'_'+row.comment_id;
     return `
     <div class="card">
-      <div class="card-header post_info">
+      <div class="card-header post_info card_header_${type}">
         <span>
-          <img src="${row.avatar}" width="35" height="35" class="rounded-circle">
+          <img src="${row.avatar}" width="28" height="28" class="rounded-circle">
           ${ $('#user_posts').val().length == 0 ? 
             `<a class="clickable" href="${base_url}?user_posts=${row.username}">${row.username}</a>` : row.username }
           <a class="user_stats" title="votes"><i class="fa fa-circle text-secondary"></i> ${row.user_votes}</a>
@@ -16,37 +17,40 @@ jQuery(document).ready(function ($) {
           <a class="user_stats" title="comments"><i class="fa fa-circle text-secondary"></i> ${row.user_comments}</a>
         </span>
         <span><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</span>
-        <span><i class="fa fa-thumbs-up"></i> ${row.votes}</span>
-        <span><i class="fa fa-comments"></i> ${row.comment_count}</span>
       </div>
       <div class="card-body">
-        <div id="${type}_view_container_${row.id}">` + 
+        <div id="${type}_view_container_${row.id}" class="post_content">` + 
           (row.truncated ? 
-            `<div class="post_content">
+            `<div>
               ${row.feat_image.length ? 
-                `<div class="feat_image"><img src="${row.feat_image}"></div>` : ''
-              }
+                `<div class="">
+                  <img class="img_thumb float-sm-right" src="${row.feat_image}">
+                </div>` : ''}
               ${row.content}
             </div>
             <p class="mt-1">${ajax_page_link(type+'_view_container_'+row.id, controller+'/view_ajax/'+row.id, 'Read more', 'theme_link_red clickable text-bold', '', '', '', '', '', 0)}</p>` : 
-            `<div class="post_content">${row.content}</div>`
+            `<div>${row.content}</div>`
           ) +
         `</div>
         <div class="post_extra m-t-20">
           ${row.voted == 1 ? '<small class="d-block text-info">You upvoted this.</small>' : ''}
-          <span class="extra"><a class="comment_replies" data-type="${type} data-id="${row.id}" data-comment_id="${type == 'post' ? 0 : row.comment_id}" data-level="${type == 'post' ? 0 : row.level}"><i class="fa fa-comments"></i> ${type == 'post' ? 'Comments' : 'Replies'}</a></span>
-          <span class="extra">${ajax_page_link(type+'_action_container_'+row.id, 'comments/list_ajax/'+row.id, (type == 'post' ? 'Comments' : 'Replies'), '', '', 'comments', '', '', '', 0)}</span>` + 
-          (row.is_user_post == 0 ?
-            `<span class="extra"><a class="vote" data-type="${type}" data-id="${row.id}"><i class="fa fa-thumbs-${row.voted == 1 ? 'down text-warning' : 'up text-success'}"></i> ${row.voted == 1 ? 'Downvote' : 'Upvote'}</a></span>` : ''
-          ) + 
+          <span class="extra"><a class="${row.comment_count > 0 ? 'comment_replies' : ''}" data-type="${type}" data-post_id="${row.post_id}" data-comment_id="${row.comment_id}"><i class="fa fa-comments"></i> ${type == 'post' ? 'Comments' : 'Replies'}</a>
+            <i class="fa fa-circle text-secondary d_icon"></i> ${row.comment_count}
+          </span>
+          <span class="extra">` + 
+            (row.is_user_post == 0 ?
+              `<a class="vote" data-type="${type}" data-id="${row.id}"><i class="fa fa-thumbs-${row.voted == 1 ? 'down text-warning' : 'up text-success'}"></i> ${row.voted == 1 ? 'Downvote' : 'Upvote'}</a>` : `<i class="fa fa-thumbs-up"></i> Upvotes`
+            ) + 
+            `<i class="fa fa-circle text-secondary d_icon"></i> ${row.votes}
+          </span>` +
           (row.is_user_post == 1 ?
-            `<span class="extra">${ajax_page_link(type+'_action_container_'+row.id, controller+'/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
+            `<span class="extra">${ajax_page_link(type+'_action_container_'+pc_id, controller+'/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
             <span class="extra"><a class="delete_post" data-type="${type}" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
             ''
           ) +
           (type == 'post' ?
             `<span class="social_share">
-              <a class="share_post clickable"><i class="fa fa-share"></i> Share</a>
+              <a class="share_post clickable"><i class="fa fa-refresh"></i> Share</a>
               <span class="social_btns d-none">:
                 <a class="bg-twitter" href="https://twitter.com/share?url=${post_url}&text=${truncate_str(row.content)}" target="_blank" title="tweet this"><i class="fa fa-twitter"></i></a>
                 <a class="bg-facebook" href="https://www.facebook.com/sharer/sharer.php?u=${post_url}" target="_blank" title="share on your timeline"><i class="fa fa-facebook"></i></a>
@@ -55,7 +59,7 @@ jQuery(document).ready(function ($) {
             </span>` : ''
           ) +
         `</div>
-        <div id="${type}_action_container_${row.id}"></div>
+        <div id="${type}_action_container_${pc_id}"></div>
       </div>
     </div>`;
   }
@@ -229,24 +233,24 @@ jQuery(document).ready(function ($) {
   //load comments and replies
   $(document).on('click', '.comment_replies', function() {
     var type = $(this).data('type'),
-        id = $(this).data('id'),
+        post_id = $(this).data('post_id'),
         comment_id = $(this).data('comment_id'),
-        level = $(this).data('level'),
-        container = type+'_action_container_'+id;
-    $('#'+container).load(base_url+'comments/list_ajax/'+id, function() {
-      var post_container = function(row) {
-          return `<div class="post_container m-b-15" id="comment_con_${row.id}">
+        pc_id = post_id+'_'+comment_id,
+        container = type+'_action_container_'+pc_id;
+    $('#'+container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
+        var post_container = function(row) {
+          return `<div class="post_container m-b-15" id="comment_con_${row.comment_id}">
               ${post_widget(row, 'comment')}</div>`;
         },
         posts_callback = function(jres) {
           var count = jres.body.msg.total_rows_formatted,
-              info_msg = (type == 'post' ? 'Comments' : 'Replies') + `(${count})`;
-          $('#comments_info_'+id).html(info_msg);
+              info_msg = (type == 'post' ? 'Comments' : 'Replies') + ` (${count})`;
+          $('#comments_info_'+pc_id).html(info_msg);
         },
         posts_url = 'api/comments/list',
-        elem = 'comments_'+id,
-        pagination = 'comments_pagination_'+id,
-        post_data = {id, comment_id, level};
+        elem = 'comments_'+pc_id,
+        pagination = 'comments_pagination_'+pc_id,
+        post_data = {post_id, comment_id};
       paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_callback, null, true, `Fetching ${type == 'post' ? 'comments' : 'replies'}`);
       ci_paginate(posts_url, elem, post_container, pagination, post_data, elem, posts_callback);
     });

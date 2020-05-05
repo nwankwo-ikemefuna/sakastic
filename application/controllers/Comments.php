@@ -17,8 +17,10 @@ class Comments extends Core_controller {
     }
 
 
-    public function list_ajax($id) {
-        $data['id'] = $id;
+    public function list_ajax($post_id, $comment_id) {
+        $data['post_id'] = $post_id;
+        $data['comment_id'] = $comment_id;
+        $data['pc_id'] = $post_id.'_'.$comment_id;
         $this->load->view('posts/comments/index', $data);
     }
 

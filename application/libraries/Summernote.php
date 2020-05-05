@@ -12,13 +12,19 @@ class Summernote {
 
 	public function upload() {
         $path = xpost('smt_path');
-        $size = strlen(xpost('smt_size')) ? xpost('smt_size') : 500;
         //is upload path set?
         if ( ! strlen($path)) 
             json_response('Upload path not specified', false);
         $path = 'uploads/images/'.$path;
-        $ext = 'jpg|jpeg|png|gif';
-        $conf = ['path' => $path, 'ext' => 'jpg|jpeg|png|gif', 'size' => $size, 'required' => false];
+        $conf = [
+        	'path' => $path, 
+        	'ext' => 'jpg|jpeg|png|gif', 
+        	'size' => strlen(xpost('smt_size')) ? xpost('smt_size') : 500, 
+        	'resize' => strlen(xpost('smt_resize')) ? (bool) xpost('smt_resize') : true, 
+        	'resize_width' => strlen(xpost('smt_resize_width')) ? xpost('smt_resize_width') : 200, 
+        	'resize_height' => strlen(xpost('smt_resize_height')) ? xpost('smt_resize_height') : 200,
+        	'required' => false
+        ];
         $upload = upload_file('smt_file', $conf);
         // pretty_print($upload); die;
         //file upload fails
@@ -89,10 +95,21 @@ class Summernote {
 	 * [summernote uploaded images hidden input]
 	 * @return [html] 
 	 */
-	public function config($path, $size = 500, $name = 'smt_images', $content = '', $return = false) {
+	public function config($config, $return = false) {
+		$path = $config['path'];
+		$name = $config['name'] ?? 'smt_images';
+		$size = $config['size'] ?? 500;
+		$resize = $config['resize'] ?? true;
+		$resize_width = $config['resize_width'] ?? 200;
+		$resize_height = $config['resize_height'] ?? 200;
+		$content = $config['content'] ?? '';
 		$images = strlen($content) ? join("[***]", $this->extract($content)) : '';
+		//hidden inputs
 	    $input = '<input type="hidden" class="smt_path" value="'.$path.'">';
 	    $input .= '<input type="hidden" class="smt_size" value="'.$size.'">';
+	    $input .= '<input type="hidden" class="smt_resize" value="'.$resize.'">';
+	    $input .= '<input type="hidden" class="smt_resize_width" value="'.$resize_width.'">';
+	    $input .= '<input type="hidden" class="smt_resize_height" value="'.$resize_height.'">';
 	    $input .= '<input type="hidden" name="'.$name.'" class="smt_images form-control" value="'.$images.'">';
 	    if ($return) return $input;
 	    echo $input;

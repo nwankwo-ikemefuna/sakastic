@@ -1,5 +1,5 @@
 <div id="post_section">
-    <h5>What's funny?</h5>
+    <h5><img src="<?php echo user_avatar(); ?>" width="28" height="28" class="rounded-circle"> What's funny?</h5>
     <?php
     $ajax_page = 'add';
     require 'adit.php'; ?>

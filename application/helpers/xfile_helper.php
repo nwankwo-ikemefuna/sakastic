@@ -42,7 +42,16 @@ function upload_file($file_input, $conf) {
         //upload does not happen when file is selected
         return ['status' => false, 'error' => $ci->upload->display_errors()];
     } else { 
-        return ['status' => true, 'file_name' => $ci->upload->data('file_name')];
+        //upload happens, everyone is happy
+        $file_name = $ci->upload->data('file_name');
+        //are we resizing?
+        $resize = isset($conf['resize']) ? $conf['resize'] : false;
+        if ($resize) {
+            $width = $conf['resize_width'] ?? 500;
+            $height = $conf['resize_height'] ?? 500;
+            resize_image($conf['path'], $file_name, $width, $height);
+        }
+        return ['status' => true, 'file_name' => $file_name];
     }
 }
 
@@ -90,7 +99,15 @@ function upload_files($file_input, $conf) {
         
         // Upload file to server
         if ($ci->upload->do_upload('file')) {
-            $upload_data['file_names'][] = $ci->upload->data('file_name');
+            $file_name = $ci->upload->data('file_name');
+            $upload_data['file_names'][] = $file_name;
+            //are we resizing?
+            $resize = isset($conf['resize']) ? $conf['resize'] : false;
+            if ($resize) {
+                $width = $conf['resize_width'] ?? 200;
+                $height = $conf['resize_height'] ?? 200;
+                resize_image($conf['path'], $file_name, $width, $height);
+            }
         } else {
             $upload_data['errors'][] = $ci->upload->display_errors();
         }
@@ -103,26 +120,34 @@ function upload_files($file_input, $conf) {
     }
 }
 
-function image_thumbnail($src, $title, $footer = '') { ?>
-    <div class="card img_view_thumb">
-        <img src="<?php echo $src; ?>" class="card-img-top clickable tm_image" title="<?php echo $title; ?>">
-        <?php 
-        if (strlen($footer)) { ?>
-            <div class="footer"><?php echo $footer; ?></div>
-            <?php
-        } ?>
-    </div>
-    <?php
-}
+function resize_image($path, $file_name, $width, $height) { 
+    $ci =& get_instance(); 
+    //config for image library
+    $config['image_library'] = 'gd2';
+    $config['source_image'] = $path.'/'.$file_name;
+    $config['create_thumb'] = TRUE;
+    $config['maintain_ratio'] = TRUE;
+    $config['width'] = $width;
+    $config['height'] = $height;
 
-function download_file($file_path, $file_name) { 
-    force_download($file_path, NULL);
+    //load image library
+    $ci->load->library('image_lib', $config);
+    
+    if ( ! $ci->image_lib->resize()) {
+        return $file_name; //if resize fails, return original image
+    } else {
+        $thumb = image_thumb($file_name);
+        return $thumb;
+    }
 }
 
 function unlink_file(string $path, $file = '') {
     //if file is not supplied, path is a complete file path
     $file_path = strlen($file) ? $path.'/'.$file : $path;
     if (is_file($file_path) && file_exists($file_path)) {
+        //delete thumbnail (if any)
+        delete_thumbnail($file_path);
+        //delete file
         return unlink($file_path);
     }
     return false;
@@ -133,7 +158,28 @@ function unlink_files(string $path, array $files) {
         foreach ($files as $file) {
             $file_path = $path.'/'.$file;
             if ( ! is_file($file_path) || ! file_exists($file_path)) continue;
+            //delete thumbnail (if any)
+            delete_thumbnail($file_path);
+            //delete file
             unlink($file_path);
         }
     }
+}
+
+function delete_thumbnail($file_path) {
+    $thumb = image_thumb($file_path);
+    if (is_file($thumb) && file_exists($thumb)) {
+        return unlink($thumb);
+    }
+    return false;
+}
+
+function image_thumb($file) { 
+    $suffix = '_thumb.'; //eg cat.jpg becomes cat_thumb.jpg
+    $thumb = str_lreplace('.', $suffix, $file);
+    return $thumb;
+}
+
+function download_file($file_path, $file_name) { 
+    force_download($file_path, NULL);
 }

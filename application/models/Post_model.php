@@ -12,7 +12,12 @@ class Post_model extends Core_Model {
 		$arr = sql_select_arr($select);
 		$select =  $select != '*' ? $arr['main'] : "{$alias}.*";
 		if ($type == 'post') {
+			$select .= join_select($arr, 'post_id', "p.id");
+			$select .= join_select($arr, 'comment_id', "0");
 			$select .= join_select($arr, 'comment_count', "COUNT(c.post_id)");
+		} else {
+			$select .= join_select($arr, 'comment_id', "c.id");
+			$select .= join_select($arr, 'comment_count', "COUNT(r.parent_id)");
 		}
 		$select .= join_select($arr, 'username', "u.username");
 		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
@@ -27,6 +32,13 @@ class Post_model extends Core_Model {
 			if (in_array('c', $to_join) || in_array('all', $to_join)) {
 				$joins = array_merge($joins, 
 					[T_COMMENTS.' c' => ['c.post_id = p.id']]
+				);
+			}
+		} else {
+			//replies
+			if (in_array('r', $to_join) || in_array('all', $to_join)) {
+				$joins = array_merge($joins, 
+					[T_COMMENTS.' r' => ['r.parent_id = c.id']]
 				);
 			}
 		}
@@ -126,9 +138,9 @@ class Post_model extends Core_Model {
 
     public function prepare_post($row) {
         $row = is_array($row) ? $row : (array) $row;
-        //get first image in content if any to use as featured image
+        //get thumbnail of first image in content if any to use as featured image
     	$extracted = $this->summernote->extract($row['content']);
-    	$feat_image = $extracted ? base_url($this->img_upload_path.'/'.$extracted[0]) : '';
+    	$feat_image = $extracted ? image_thumb($this->img_upload_path.'/'.$extracted[0]) : '';
     	//remove all tags from content and truncate to some words
     	$raw_content = strip_tags($row['content']);
     	$max = 30;
@@ -150,7 +162,7 @@ class Post_model extends Core_Model {
     			'user_votes' => shorten_number($row['user_votes']), 
     			'user_posts' => shorten_number($row['user_posts']), 
     			'user_comments' => shorten_number($row['user_comments']), 
-    			'comment_count' => shorten_number($row['comment_count']), 
+    			'comment_count' => isset($row['comment_count']) ? shorten_number($row['comment_count']) : 0, 
     			'truncated' => $truncated, 
     			'content' => $content, 
     			'feat_image' => $feat_image

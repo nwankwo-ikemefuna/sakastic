@@ -62,5 +62,5 @@ $route['contact'] = 'web/contact';
 $route['register'] = 'account/register';
 $route['login'] = 'account/login';
 $route['logout'] = 'account/logout';
-$route['forgot_pass'] = 'account/forgot_pass';
+$route['forgot_pass1'] = 'account/forgot_pass';
 $route['reset_pass/(:any)/(:any)'] = 'account/reset_pass/$1/$2';

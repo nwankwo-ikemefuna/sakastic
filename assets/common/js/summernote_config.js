@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-    //Money patch to fix excess whitespace on summernote textfield
+    //Monkey patch to fix excess whitespace on summernote textfield
     $.summernote.dom.emptyPara = "<div><br/></div>";
 
     //initialize
@@ -43,6 +43,9 @@ function upload_smt_image(selector, file) {
     data.append('smt_file', file);
     data.append('smt_path', wrapper.find('.smt_path').val());
     data.append('smt_size', wrapper.find('.smt_size').val());
+    data.append('smt_resize', wrapper.find('.smt_resize').val());
+    data.append('smt_resize_width', wrapper.find('.smt_resize_width').val());
+    data.append('smt_resize_height', wrapper.find('.smt_resize_height').val());
     $.ajax({
         method: 'POST',
         url: base_url+'api/common/upload_smt_image',

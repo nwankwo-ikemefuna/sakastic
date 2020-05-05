@@ -132,12 +132,21 @@ class Core_Controller extends CI_Controller {
 
 
     public function check_pass_strength() {
-        $password = $this->input->post('password', TRUE);
+        $password = xpost('password');
         $check_pass = password_strength($password);
         //password cool...
-        if ( ! $check_pass['has_err'] ) return TRUE;
+        if ( ! $check_pass['has_err'] ) return true;
         $this->form_validation->set_message('check_pass_strength', $check_pass['err']);
-        return FALSE;
+        return false;
+    }
+
+
+    public function disallowed_usernames() {
+        $username = xpost('username');
+        $disallowed = ['sakastic', 'sakastic_admin', 'sakasticadmin', 'admin', 'super_admin', 'superadmin', 'lord', 'god', 'penis', 'pussy', 'vagina'];
+        if ( ! in_array(strtolower($username), $disallowed)) return true;
+        $this->form_validation->set_message('disallowed_usernames', "Why would you use <b>{$username}</b> as username? Please choose a different one.");
+        return false;
     }
 	
 }
