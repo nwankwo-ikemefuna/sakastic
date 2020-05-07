@@ -21,7 +21,9 @@ class Comments extends Core_controller {
         $data['post_id'] = $post_id;
         $data['comment_id'] = $comment_id;
         $data['pc_id'] = $post_id.'_'.$comment_id;
-        $this->load->view('posts/comments/index', $data);
+        $data['type'] = 'comment';
+        $data['reply_type'] = $comment_id == 0 ? 'comment' : 'reply';
+        $this->load->view('posts/comments', $data);
     }
 
 

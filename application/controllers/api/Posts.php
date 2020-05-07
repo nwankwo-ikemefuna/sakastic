@@ -17,14 +17,14 @@ class Posts extends Core_controller {
         $username = xpost('user');
         if (strlen($username)) {
             //does the user even exists?
-            $row = $this->ci->user_model->get_details($username, 'username', [], "id");
+            $row = $this->user_model->get_details($username, 'username', [], "id");
             if ($row) {
                 $where = ['p.user_id' => $row->id];
             }
         }
         //searching?
         if (strlen(xpost('search'))) {
-            $this_where = $this->ci->post_model->search();
+            $this_where = $this->post_model->search();
             $where = array_merge($where, [$this_where => null]);
         } 
         return $where;

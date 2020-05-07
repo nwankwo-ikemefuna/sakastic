@@ -8,10 +8,10 @@ $(document).ready(function() {
 
 });
 
-function summernote_init(selector = '.summernote', tools = {}) {
+function summernote_init(selector = '.summernote', tools = {}, extra = {}) {
     $(selector).summernote({
-        height: $(selector).attr('data-height') ? $(selector).data('height') : 200,
-        placeholder: $(selector).attr('data-placeholder') ? $(selector).data('placeholder') : '',
+        height: ('height' in extra) ? extra.height : 200,
+        placeholder: ('placeholder' in extra) ? extra.placeholder : '',
         followingToolbar: false, //disable page trembling effect
         toolbar: [
             // [groupName, [list of button]]
@@ -39,6 +39,7 @@ function summernote_init(selector = '.summernote', tools = {}) {
 function upload_smt_image(selector, file) {
     var data = new FormData(),
         wrapper = $(selector).closest('.smt_wrapper');
+    // console.log(wrapper);
     //appendages
     data.append('smt_file', file);
     data.append('smt_path', wrapper.find('.smt_path').val());

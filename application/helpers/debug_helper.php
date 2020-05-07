@@ -6,10 +6,14 @@ function xdump($var = null) {
     }
 }
 
-function last_sql($die = true) {
+function last_sql() {
 	$ci =& get_instance();
     echo $ci->db->last_query();
-    if ($die) die;
+}
+
+function total_queries() {
+	$ci =& get_instance();
+    echo $ci->db->total_queries();
 }
 
 function pretty_print($var) {

@@ -94,7 +94,7 @@ array(
     //CI: system/helpers
     'date', 'form', 'inflector', 'string', 'text', 'typography', 'url',
     //custom: application/helpers
-    'app', 'bootstrap', 'crud', 'debug', 'email', 'http', 'pagination', 'query', 'template', 'user', 'xfile', 'xform'
+    'app', 'bootstrap', 'crud', 'debug', 'email', 'http', 'pagination', 'post', 'query', 'template', 'user', 'xfile', 'xform'
 );
 
 /*

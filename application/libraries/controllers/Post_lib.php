@@ -11,7 +11,6 @@ class Post_lib {
         $this->table = $this->type.'s'; //post OR comment
         $this->alias = $this->type[0]; //p OR c
         $this->table_with_alias = $this->table.' '.$this->alias; 
-        $this->view_dir = ($this->type == 'post') ? 'posts' : 'posts/comments';
         $this->img_upload_path = $params['upload_path'] ?? '';
     }
 
@@ -20,7 +19,6 @@ class Post_lib {
         $per_page = 3;
         $page = paginate_offset($page, $per_page);
         $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, $per_page, $page);
-        // last_sql(); die;
         $total_records = $this->ci->common_model->count_rows($this->table_with_alias, $where);
         $data = paginate($records, $total_records, $per_page, "api/{$this->type}s/list");
         json_response($data);
@@ -29,7 +27,6 @@ class Post_lib {
 
     public function view() {
         $this->ci->form_validation->set_rules('id', 'ID', 'trim|required');
-        $this->ci->form_validation->set_rules('type', 'Type', 'trim|required');
         if ($this->ci->form_validation->run() === FALSE)
             json_response(validation_errors(), false);
         $id = xpost('id');
@@ -42,8 +39,14 @@ class Post_lib {
 
     private function adit($crud_type) {
         $this->ci->check_loggedin();
-        if ($crud_type == 'edit') {
+        if ($crud_type == 'edit') { //edit
             $this->ci->form_validation->set_rules('id', 'ID', 'trim|required');
+        } else { //add
+            if ($this->type == 'comment') {
+                //require post and comment idx
+                $this->ci->form_validation->set_rules('post_id', 'Post ID', 'trim|required');
+                $this->ci->form_validation->set_rules('comment_id', 'Comment ID', 'trim|required');
+            }
         }
         $this->ci->form_validation->set_rules('content', 'Post', 'trim|required');
         $this->ci->form_validation->set_rules('smt_images', 'Images', 'trim');
@@ -62,6 +65,13 @@ class Post_lib {
             'user_id' => $this->ci->session->user_id,
             'content' => ucfirst(xpost_txt('content'))
         ];
+        //if comment, append post and comment idx to array
+        if ($this->type == 'comment') {
+            $data = array_merge($data, [
+                'post_id' => xpost('post_id'),
+                'parent_id' => xpost('comment_id')
+            ]);
+        }
         return $data;
     }
 
@@ -139,15 +149,21 @@ class Post_lib {
 
     public function view_ajax($id) {
         $data['id'] = $id;
-        $data['row'] = $this->ci->post_model->get_details($this->type, $id, 'id', [], "content");
-        $this->ci->load->view($this->view_dir.'/view', $data);
+        $data['type'] = $this->type;
+        $data['content'] = $this->ci->post_model->get_details($this->type, $id, 'id', [], "content")->content;
+        $this->ci->load->view('posts/view', $data);
     }
 
 
     public function edit_ajax($id) {
+        $select = 'content ' . ($this->type == 'post' ? '## comment_id' : ', parent_id');
+        $row = $this->ci->post_model->get_details($this->type, $id, 'id', [], $select);
         $data['id'] = $id;
-        $data['row'] = $this->ci->post_model->get_details($this->type, $id, 'id', [], "content");
-        $this->ci->load->view($this->view_dir.'/edit', $data);
+        $data['type'] = $this->type;
+        $data['row'] = $row;
+        $data['reply_type'] = $this->type == 'post' ? 'post' : ($row->parent_id == 0 ? 'comment' : 'reply');
+        // var_dump($row->parent_id); die;
+        $this->ci->load->view('posts/edit', $data);
     }
 
 }

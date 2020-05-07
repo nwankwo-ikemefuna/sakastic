@@ -77,7 +77,9 @@ class Post_model extends Core_Model {
 			);
 		}
 		$table = $type.'s '.$alias; //posts p OR comments c
-		return sql_data($table, $joins, $select, $where);
+		//default order: posts desc, comments asc
+		$order = ['date_created' => ($type == 'post') ? 'desc' : 'asc'];
+		return sql_data($table, $joins, $select, $where, $order);
 	}
 
 
@@ -103,6 +105,8 @@ class Post_model extends Core_Model {
 
     public function search() {
         $search = xpost('search');
+        //properly escape string
+        $search = $this->db->escape_str($search, true);
         $where = sprintf("(
             p.`content` LIKE '%s')",
             "%{$search}%"
@@ -126,8 +130,7 @@ class Post_model extends Core_Model {
 
 
 	private function prepare_posts($posts) {
-		// last_sql(); die;
-        $data = [];
+		$data = [];
         $posts = is_array($posts) ? $posts : (array) $posts;
         foreach ($posts as $row) {
         	$data[] = $this->prepare_post($row);

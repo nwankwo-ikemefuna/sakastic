@@ -194,9 +194,6 @@ body {
 .bar_title::after {
   right: 0;
 }
-.post_action_container {
-  padding: 15px 0;
-}
 .post_content img {
   max-width: 100%;
 }
