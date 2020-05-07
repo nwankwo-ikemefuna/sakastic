@@ -87,8 +87,8 @@ class Post_model extends Core_Model {
 		$alias = $type[0]; //p OR c
         switch ($sort_by) {
         	case 'popular': //with most comments or replies
-        		$col = $type == 'post' ? 'post_id' : 'parent_id';
-                $order = ["COUNT(c.{$col})" => 'desc'];
+        		$col = $type == 'post' ? 'c.post_id' : 'r.parent_id';
+                $order = ["COUNT({$col})" => 'desc'];
                 break;
             case 'voted': //most upvoted
                 $order = ["{$alias}.votes" => 'desc'];

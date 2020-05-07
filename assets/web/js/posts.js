@@ -6,7 +6,7 @@ jQuery(document).ready(function ($) {
   //object to hold our post data
   var post_data = {
     search: '',
-    sort_by: '',
+    sort_by: 'newest',
     user: ''
   },
   post_container = function(row) {
@@ -112,18 +112,26 @@ jQuery(document).ready(function ($) {
         comment_id = $(this).data('comment_id'),
         pc_id = post_id+'_'+comment_id,
         container = type+'_action_container_'+pc_id,
-        comment_data = {post_id, comment_id, sort_by: ''};
+        comment_data = {post_id, comment_id, sort_by: 'oldest'};
     $('#'+container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
 
-      //initialize summernote
-      summernote_init('.smt_add_comment_'+pc_id, {picture: true}, {height: 100});
+      //initialize summernote: 
+      //NB: Uncomment to allow 
+      // summernote_init('.smt_add_comment_'+pc_id, {picture: true}, {height: 100});
 
-      var comment_sort_radio = function(label, val, is_default = false, is_first = false) {
-        var checked = (comment_data.sort_by == '' && is_default) || (comment_data.sort_by == val)  ? 'checked' : '';
-        return `<span class="form-check form-check-inline ${ ! is_first ? 'm-l-10-n' : ''}">
-          <input type="radio" class="form-check-input sort_comments" name="sort_comments_${pc_id}" id="csort_${val}_${pc_id}" value="${val}" ${checked}>
-          <label class="form-check-label" for="csort_${val}_${pc_id}" style="font-weight: 400;">${label}</label>
-        </span>`;
+      var comment_sort_options = function(current_val) {
+        var sorts = {
+            newest: 'Newest First',
+            oldest: 'Oldest First',
+            voted: 'Most Upvoted',
+            popular: 'Most Replied'
+          },
+          options = "", selected = "";
+        Object.keys(sorts).map(function(value) {
+          selected = (value == current_val)  ? 'selected' : '';
+          options += `<option ${selected} value="${value}">${sorts[value]}</option>`;
+        });
+        return options;
       }
 
       var comment_container = function(row) {
@@ -135,10 +143,9 @@ jQuery(document).ready(function ($) {
             info_msg = (type == 'post' ? 'Comments' : 'Replies') + ` (${count})`;
             info_msg += count > 0 ? ` <span class="m-l-10"><i class="fa fa-cog text-secondary f-s-11"></i> <a class="text-bold clickable" data-toggle="collapse" data-target="#comments_section_${pc_id}">hide/show</a></span>
               <span class="m-l-10"><i class="fa fa-cog text-secondary f-s-11"></i> sort by:
-                ${comment_sort_radio('oldest first', 'oldest', true, true)}
-                ${comment_sort_radio('newest first', 'newest')}
-                ${comment_sort_radio('most upvoted', 'voted')}
-                ${comment_sort_radio('most replied', 'popular')}
+                <select class="sort_comments" width="100">
+                  ${comment_sort_options(comment_data.sort_by)}
+                </select>
               </span>` : 
             '';
           $('#comments_info_'+pc_id).html(info_msg);
@@ -149,9 +156,11 @@ jQuery(document).ready(function ($) {
       paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, `Fetching ${type == 'post' ? 'comments' : 'replies'}`);
       ci_paginate(comments_url, comments_elem, comment_container, comments_pagination, comment_data, comments_elem, comments_callback);
 
-      var hard_comment_action = function(jres, toast_title, toast_success) {
+      var hard_comment_action = function(jres, toast_title, toast_success, sort_by_newest = false) {
         if (jres.status) {
           show_toast(toast_title, toast_success, 'success');
+          //if called when adding comment, we force sorting to newest first so the user can see their brand new comment
+          comment_data.sort_by = sort_by_newest ? 'newest' : comment_data.sort_by;
           paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, 'Loading');
         } else {
           show_toast(toast_title, jres.error, 'danger');
@@ -216,14 +225,18 @@ jQuery(document).ready(function ($) {
     var content = container.find('[name="content"]');
     if (content.val().trim() == "" || !user_loggedin(login_prompt)) return false;
     var type = $(obj).data('type'),
-        controller = type+'s';
+        controller = type+'s',
+        is_post = (type == 'post');
     var callback = function (jres) {
       if (typeof hard_callback === "function") {
-        hard_callback(jres, toast_title, toast_success);
+        hard_callback(jres, toast_title, toast_success, !is_post);
       }
-      //clear form fields
-      content.summernote('reset');
-      container.find('[name="smt_images"]').val('');
+      //are we using summernote?
+      if (is_post) {
+        //clear form fields
+        content.summernote('reset');
+        container.find('[name="smt_images"]').val('');
+      }
     }
     var form_data = new FormData(obj);
     post_data_ajax(base_url+'api/'+controller+'/add', form_data, true, callback, null, true);

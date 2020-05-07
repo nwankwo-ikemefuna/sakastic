@@ -8,7 +8,7 @@
 </div>
 
 <div class="row m-t-20 m-b-20">
-    <div class="<?php echo grid_col(12, '', 9); ?> p-b-10">
+    <div class="<?php echo grid_col(12, '', 8); ?> p-b-10">
         <div class="input-group search_btn">
             <span class="input-group-prepend">
                 <button type="button" id="cancel_search" class="btn " title="Cancel search"><i class="fa fa-remove"></i></button>
@@ -19,10 +19,15 @@
             </span>
         </div>
     </div>
-    <div class="<?php echo grid_col(12, '', 3); ?> p-b-10">
-        <?php
-        $options = ['popular' => 'Most Popular', 'voted' => 'Most Upvoted', 'newest' => 'Newest', 'oldest' => 'Oldest'];
-        xform_select('sort_by', '', false, ['options' => $options, 'blank_text' => 'Sort By:']); ?>
+    <div class="<?php echo grid_col(12, '', 4); ?> p-b-10">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">Sort by:</span>
+            </div>
+            <?php
+            $options = ['newest' => 'Newest First', 'oldest' => 'Oldest First', 'voted' => 'Most Upvoted', 'popular' => 'Most Commented'];
+            xform_select('sort_by', 'newest', false, ['options' => $options, 'blank' => false]); ?>
+        </div>
     </div>
 </div>
 
