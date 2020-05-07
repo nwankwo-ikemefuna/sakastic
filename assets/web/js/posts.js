@@ -111,11 +111,20 @@ jQuery(document).ready(function ($) {
         post_id = $(this).data('post_id'),
         comment_id = $(this).data('comment_id'),
         pc_id = post_id+'_'+comment_id,
-        container = type+'_action_container_'+pc_id;
+        container = type+'_action_container_'+pc_id,
+        comment_data = {post_id, comment_id, sort_by: ''};
     $('#'+container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
 
       //initialize summernote
       summernote_init('.smt_add_comment_'+pc_id, {picture: true}, {height: 100});
+
+      var comment_sort_radio = function(label, val, is_default = false, is_first = false) {
+        var checked = (comment_data.sort_by == '' && is_default) || (comment_data.sort_by == val)  ? 'checked' : '';
+        return `<span class="form-check form-check-inline ${ ! is_first ? 'm-l-10-n' : ''}">
+          <input type="radio" class="form-check-input sort_comments" name="sort_comments_${pc_id}" id="csort_${val}_${pc_id}" value="${val}" ${checked}>
+          <label class="form-check-label" for="csort_${val}_${pc_id}" style="font-weight: 400;">${label}</label>
+        </span>`;
+      }
 
       var comment_container = function(row) {
           return `<div class="post_container m-b-15" id="comment_con_${row.comment_id}">
@@ -123,14 +132,20 @@ jQuery(document).ready(function ($) {
         },
         comments_callback = function(jres) {
           var count = jres.body.msg.total_rows_formatted,
-              info_msg = (type == 'post' ? 'Comments' : 'Replies') + `: ${count}`;
-              info_msg += count > 0 ? ` (<a class="text-primary text-bold clickable" data-toggle="collapse" data-target="#comments_section_${pc_id}">hide/show</a>)` : '';
+            info_msg = (type == 'post' ? 'Comments' : 'Replies') + ` (${count})`;
+            info_msg += count > 0 ? ` <span class="m-l-10"><i class="fa fa-cog text-secondary f-s-11"></i> <a class="text-bold clickable" data-toggle="collapse" data-target="#comments_section_${pc_id}">hide/show</a></span>
+              <span class="m-l-10"><i class="fa fa-cog text-secondary f-s-11"></i> sort by:
+                ${comment_sort_radio('oldest first', 'oldest', true, true)}
+                ${comment_sort_radio('newest first', 'newest')}
+                ${comment_sort_radio('most upvoted', 'voted')}
+                ${comment_sort_radio('most replied', 'popular')}
+              </span>` : 
+            '';
           $('#comments_info_'+pc_id).html(info_msg);
         },
         comments_url = 'api/comments/list',
         comments_elem = 'comments_'+pc_id,
-        comments_pagination = 'comments_pagination_'+pc_id,
-        comment_data = {post_id, comment_id};
+        comments_pagination = 'comments_pagination_'+pc_id;
       paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, `Fetching ${type == 'post' ? 'comments' : 'replies'}`);
       ci_paginate(comments_url, comments_elem, comment_container, comments_pagination, comment_data, comments_elem, comments_callback);
 
@@ -156,6 +171,15 @@ jQuery(document).ready(function ($) {
         //stop bubbling up to ancestors
         e.stopImmediatePropagation();
         delete_post_action(this, hard_comment_action, 'Delete Notice', 'Successful');
+      });
+
+      //sorting
+      $(document).on('change', '.sort_comments', function(e) {
+        //stop bubbling up to ancestors
+        e.stopImmediatePropagation();
+        var sort_by = $(this).val();
+        comment_data.sort_by = sort_by;
+        paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, 'Loading');   
       });
 
     });

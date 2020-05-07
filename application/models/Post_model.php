@@ -83,20 +83,22 @@ class Post_model extends Core_Model {
 	}
 
 
-	public function sort($sort_by) {
+	public function sort($sort_by, $type) {
+		$alias = $type[0]; //p OR c
         switch ($sort_by) {
-        	case 'popular':
-                $order = ['COUNT(c.post_id)' => 'desc'];
+        	case 'popular': //with most comments or replies
+        		$col = $type == 'post' ? 'post_id' : 'parent_id';
+                $order = ["COUNT(c.{$col})" => 'desc'];
                 break;
-            case 'voted':
-                $order = ['p.votes' => 'desc'];
+            case 'voted': //most upvoted
+                $order = ["{$alias}.votes" => 'desc'];
                 break; 
-            case 'oldest':
-                $order = ['p.date_created' => 'asc'];
+            case 'oldest': //oldest first
+                $order = ["{$alias}.date_created" => 'asc'];
                 break;
-            case 'newest':
+            case 'newest': //newest first
             default:
-                $order = ['p.date_created' => 'desc'];
+                $order = ["{$alias}.date_created" => 'desc'];
                 break;
         }
         return $order;
@@ -123,7 +125,8 @@ class Post_model extends Core_Model {
 
 	public function get_record_list($type, $to_join, $select = "*", $where = [], $limit = '', $offset = 0) {
 		$sql = $this->sql($type, $to_join, $select, $where);
-		$order = strlen(xpost('sort_by')) ? $this->sort(xpost('sort_by')) : $sql['order'];
+		//is sort type set? else use default
+		$order = strlen(xpost('sort_by')) ? $this->sort(xpost('sort_by'), $type) : $sql['order'];
 		$posts = $this->get_rows($sql['table'], 0, $sql['joins'], $sql['select'], $where, $order, $sql['group_by'], $limit, $offset);
 		return $this->prepare_posts($posts);
 	}
