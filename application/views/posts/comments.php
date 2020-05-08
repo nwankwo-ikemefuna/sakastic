@@ -15,7 +15,7 @@
         <div class="input-group-prepend">
             <span class="input-group-text comment_sort_input_text">Sort by</span>
         </div>
-		<select class="sort_comments" width="100" id="sort_comments_<?php echo $pc_id; ?>">
+		<select class="sort_comments" width="100" id="sort_comments_<?php echo $pc_id; ?>" data-post_id="<?php echo $post_id; ?>" data-comment_id="<?php echo $comment_id; ?>">
 		  <!-- Render options dymanically-->
 		</select>
 	</div>

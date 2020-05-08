@@ -1,7 +1,7 @@
 <?php 
-sidebar_card_widget('Recent Posts', 'sb_recent_posts', '/');
 sidebar_card_widget('Trending this Week', 'sb_trending_posts', '?type=trending');
-sidebar_card_widget('Posts You Followed', 'sb_followed_posts', '?type=followed');
+sidebar_card_widget('Recent Posts', 'sb_recent_posts', '?type=recent');
+sidebar_card_widget('Posts I\'m Following', 'sb_followed_posts', '?type=followed');
 sidebar_card_widget('Top Posters', 'sb_top_posters');
 ?>
 

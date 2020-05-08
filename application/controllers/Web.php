@@ -11,7 +11,7 @@ class Web extends Core_controller {
     public function index() {
         $this->show_page_title = false;
         $this->show_disclaimer = false;
-        $page_title = $this->site_name.' - '.$this->site_description;
+        $page_title = 'Home';
         //if viewing user posts, does user exist?
         if (isset($_GET['user_posts'])) {
             $username = xget('user_posts');

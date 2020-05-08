@@ -164,15 +164,20 @@ class Core_Model extends CI_Model {
      * get record count
      * @return int
      */
-    public function count_rows($table, $where = [], $trashed = 0) {
+    public function count_rows($table, $where = [], $trashed = 0, $joins = [], $having = '') {
         // var_dump(func_get_args()); die;
         $alias = $this->table_alias($table);
+        $this->joins($joins);
         if ( ! array_key_exists($alias.'trashed', $where)) {
             //are we considering trashed?
             if ($trashed != -1)
                 $this->db->where($alias.'.trashed', $trashed);
         }
         $this->db->where($where);
+        //having
+        if (strlen($having)) {
+            $this->db->having($having);
+        }
         return $this->db->count_all_results($table);
     }
 

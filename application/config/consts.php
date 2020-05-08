@@ -39,3 +39,6 @@ define('C_NIGERIA', 135);
 
 define('SITE_INFO_MAIL', 'info@softbytech.com');
 define('SITE_NOTIF_MAIL', 'notify@softbytech.com');
+
+//followed post time to live
+define('FOLLOWED_POST_TTL', 60*60*24*7); //7 days

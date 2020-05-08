@@ -8,6 +8,7 @@ jQuery(document).ready(function ($) {
     search: '',
     sort_by: 'newest',
     user: '',
+    type: '',
     id: ''
   },
   post_container = function(row) {
@@ -16,30 +17,35 @@ jQuery(document).ready(function ($) {
   },
   posts_callback = function(jres) {
     //viewing user posts?
-    var count = jres.body.msg.total_rows_formatted;
-    var user = $('#user_posts').val();
-    var search = $('[name="search"]').val();
-    var search_msg = `Search results for <em class="text-primary">${search}</em> (${count})`;
+    var count = jres.body.msg.total_rows_formatted,
+        user = $('#user_posts').val(),
+        type = $('#type').val(),
+        search = $('#search_post_field').val();
     if (user.length) {
-      if (search.length) {
-        $('#posts_info').show().html(search_msg);
-      } else {
-        $('#posts_info').show().html(`${user == username ? 'My' : (user+"'s")} posts (${count})`);
-      }
+      //user posts
+      $('#posts_info').show().html(`${user == username ? 'My' : (user+"'s")} posts (${count})`);
+    } else if (search.length) {
+      //searching
+      $('#posts_info').show().html(`Search results for <em class="text-primary">${search}</em> (${count})`);
     } else {
-      if (search.length) {
-        $('#posts_info').show().html(search_msg);
+      if (type.length) {
+        var types = {recent: 'Recent posts', trending: 'Posts trending this week', followed: 'Posts I\'m following'};
+        //no point showing count on recent posts
+        if (type != 'recent') {
+          $('#posts_info').show().html(`${types[type]} (${count})`);
+        }
       } else {
         $('#posts_info').hide();
       }
-    }
+    } 
   },
   posts_url = 'api/posts/list',
   posts_elem = 'posts',
   posts_pagination = 'posts_pagination';
   //params from get
   post_data.user = $('#user_posts').val();
-  post_data.search = $('[name="search"]').val();
+  post_data.type = $('#type').val();
+  post_data.search = $('#search_post_field').val();
   if (current_page == 'home') {
     paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
   }
@@ -85,6 +91,15 @@ jQuery(document).ready(function ($) {
     add_post_action(this, container, hard_post_action, 'Post Notice', 'Posted successfully');
   });
 
+  //following
+  $(document).on('click', '.follow_post', function() {
+    var id = $(this).data('id'),
+        container = $(this).closest('.post_container').attr('id'),
+        controller = type+'s',
+        is_post_view = $('#is_post_view').val();
+    soft_post_action('post', 'api/posts/follow', {id, is_post_view}, container, false, false, false, false, 'Follow Notice');
+  });
+
   //deleting
   $(document).on('click', '.delete_post.post', function() {
     //if post view, redirect to user posts on success
@@ -94,7 +109,7 @@ jQuery(document).ready(function ($) {
 
   //searching
   $(document).on('click', '#search_posts', function() {
-    var search = $('[name="search"]').val();
+    var search = $('#search_post_field').val();
     if (search.length) {
       post_data.search = search;
       paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Running search');
@@ -103,16 +118,16 @@ jQuery(document).ready(function ($) {
 
   //cancel
   $(document).on('click', '#cancel_search', function() {
-    var search = $('[name="search"]').val();
+    var search = $('#search_post_field').val();
     if (search.length) {
-      $('[name="search"]').val('');
+      $('#search_post_field').val('');
       post_data.search = '';
       paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Applying changes');
     }
   });
 
   //sorting
-  $(document).on('change', '[name="sort_by"]', function() {
+  $(document).on('change', '#sort_posts', function() {
     var sort_by = $(this).val();
     post_data.sort_by = sort_by;
     paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Applying sort');
@@ -138,9 +153,9 @@ jQuery(document).ready(function ($) {
         comment_id = $(this).data('comment_id'),
         pc_id = post_id+'_'+comment_id,
         container = type+'_action_container_'+pc_id,
-        comment_data = {post_id, comment_id, sort_by: 'oldest'};
+        sort_by = 'oldest',
+        comment_data = {post_id, comment_id, sort_by};
     $('#'+container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
-
       var comment_container = function(row) {
           return `<div class="post_container m-b-15" id="comment_con_${row.comment_id}">
               ${post_widget(row, 'comment')}</div>`;
@@ -206,8 +221,13 @@ jQuery(document).ready(function ($) {
       $(document).on('change', '.sort_comments', function(e) {
         //stop bubbling up to ancestors
         e.stopImmediatePropagation();
-        var sort_by = $(this).val();
-        comment_data.sort_by = sort_by;
+        post_id = $(this).data('post_id');
+        comment_id = $(this).data('comment_id');
+        sort_by = $(this).val();
+        pc_id = pc_id = post_id+'_'+comment_id;
+        comments_elem = 'comments_'+pc_id;
+        comments_pagination = 'comments_pagination_'+pc_id;
+        comment_data = {post_id, comment_id, sort_by};
         paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, 'Loading');   
       });
 
@@ -218,7 +238,7 @@ jQuery(document).ready(function ($) {
   /* ================ Common =============== */
 
   //post actions: will re-render post after some action such as editing and voting, which do not affect post count
-  var soft_post_action = function(type, url, data, container, is_form_data = false, loading = false, scroll_to = false, success_toast = false, toast_title = '') {
+  function soft_post_action(type, url, data, container, is_form_data = false, loading = false, scroll_to = false, success_toast = false, toast_title = '') {
     var callback = function(jres) {
       if (jres.status) {
         if (success_toast) {
@@ -353,7 +373,7 @@ jQuery(document).ready(function ($) {
           ) +
         `</div>
         <div class="post_extra m-t-20">
-          ${row.voted == 1 ? '<small class="d-block text-info">You upvoted this.</small>' : ''}
+          ${row.voted == 1 ? '<small class="d-none text-info">You upvoted this.</small>' : ''}
           ` + 
           (type == 'post' && $('#is_post_view').val() != 1 ?
             `<span class="extra"><a class="view_link" href="${base_url}posts/view/${row.id}"><i class="fa fa-external-link"></i> View</a></span>` : ''
@@ -363,10 +383,13 @@ jQuery(document).ready(function ($) {
           </span>
           <span class="extra">` + 
             (row.is_user_post == 0 ?
-              `<a class="vote" data-type="${type}" data-id="${row.id}"><i class="fa fa-thumbs-${row.voted == 1 ? 'down text-warning' : 'up text-success'}"></i> ${row.voted == 1 ? 'Downvote' : 'Upvote'}</a>` : `<i class="fa fa-thumbs-up"></i> Upvotes`
+              `<a class="vote" data-type="${type}" data-id="${row.id}"><i class="fa fa-thumbs-${row.voted == 1 ? 'down' : 'o-up'}"></i> ${row.voted == 1 ? 'Downvote' : 'Upvote'}</a>` : `<i class="fa fa-thumbs-up"></i> Upvotes`
             ) + 
             `<i class="fa fa-circle text-secondary d_icon"></i> ${row.votes}
           </span>` +
+          (type == 'post' ?
+            `<span class="extra"><a class="follow_post" data-id="${row.id}"><i class="fa fa-bookmark${row.followed ? '' : '-o'}"></i> ${row.followed ? 'Unfollow' : 'Follow'}</a></span>` : ''
+          ) +
           (row.is_user_post == 1 ?
             `<span class="extra">${ajax_page_link(type+'_action_container_'+pc_id, controller+'/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
             <span class="extra"><a class="delete_post ${type}" data-type="${type}" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
@@ -392,10 +415,18 @@ jQuery(document).ready(function ($) {
 
   /* ================ Sidebar ================== */
 
-  sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {sidebar: 1});
-  sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {sidebar: 1});
-  // sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {sidebar: 1});
-  // sidebar_card_widget('sb_top_posters', 'api/posts/top_posters', {limit: 5});
+  //trending posts
+  setTimeout(function() {
+    sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {sidebar: 1});
+  }, 2000);
+  //recent posts
+  setTimeout(function() {
+    sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {sidebar: 1});
+  }, 4000);
+  //followed posts
+  setTimeout(function() {
+    sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {sidebar: 1});
+  }, 6000);
 
   function sidebar_card_widget(container, url, data = {}) {
     var callback = function(jres) {

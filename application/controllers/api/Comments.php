@@ -16,7 +16,7 @@ class Comments extends Core_controller {
             'c.post_id' => xpost('post_id'), 
             'c.parent_id' => xpost('comment_id')
         ];
-        $this->post_lib->list($where, $page);
+        $this->post_lib->list($page, $where);
     }
 
 

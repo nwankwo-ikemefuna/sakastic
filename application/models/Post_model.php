@@ -18,6 +18,7 @@ class Post_model extends Core_Model {
 		} else {
 			$select .= join_select($arr, 'comment_id', "c.id");
 			$select .= join_select($arr, 'comment_count', "COUNT(r.parent_id)");
+			$select .= join_select($arr, 'followed', "0");
 		}
 		$select .= join_select($arr, 'username', "u.username");
 		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
@@ -117,26 +118,101 @@ class Post_model extends Core_Model {
     }
 
 
+    public function trending_query() {
+        //this week. skip if no comment
+        $data['where'] = ['YEARWEEK(p.date_created) = YEARWEEK(NOW())' => null];
+		$data['order'] = ['COUNT(c.post_id)' => 'desc'];
+		$data['having'] = 'COUNT(c.post_id) > 0';
+		$data['count_joins'] = ["(
+			SELECT post_id 
+		    FROM `".T_COMMENTS."`
+		    GROUP BY post_id
+   	 		HAVING COUNT(post_id) > 0
+		) `c`" => ["`c`.`post_id` = `p`.`id`", 'left', false]];
+		return $data;
+    }
+
+
+    public function followed_query() {
+        $followed_posts = $this->session->tempdata('followed_posts') ?? [];
+		$post_idx = join_us(array_keys($followed_posts));
+		$data['where'] = ["FIND_IN_SET(p.id, '{$post_idx}')" => null];
+		return $data;
+    }
+
+
+    public function filter() {
+        $data = ['where' => [], 'order' => [], 'count_joins' => [], 'having' => ''];
+        //user posts?
+        $username = xpost('user');
+        if (strlen($username)) {
+            //does the user even exists?
+            $row = $this->user_model->get_details($username, 'username', [], "id");
+            if ($row) {
+                $data['where'] = ['p.user_id' => $row->id];
+            }
+        }
+        //type?
+        if (strlen(xpost('type'))) {
+            switch (xpost('type')) {
+
+            	//recent
+            	case 'recent':
+            		$data['order'] = ['p.date_created' => 'desc'];
+            		break;
+
+            	//trending
+            	case 'trending':
+            		$query = $this->trending_query();
+            		$data['where'] = array_merge($query['where'], ['c.post_id = p.id' => null]);
+            		$data['order'] = $query['order'];
+            		$data['count_joins'] = $query['count_joins'];
+            		$data['having'] = $query['having'];
+            		break;
+
+            	//followed
+            	case 'followed':
+            		$query = $this->followed_query();
+            		$data['where'] = $query['where'];
+            		break;
+            }
+        } 
+        //searching?
+        if (strlen(xpost('search'))) {
+            $this_where = $this->search();
+            //merge to previous where
+            $where = array_merge($data['where'], [$this_where => null]);
+        } 
+        return $data;
+    }
+
+
 	public function get_details($type, $id, $by = 'id', $to_join = [], $select = "*", $trashed = 0) {
 		$sql = $this->sql($type, $to_join, $select);
 		return $this->get_row($sql['table'], $id, $by, $trashed, $sql['joins'], $sql['select'], [], $sql['group_by']);
 	}
 
 
-	public function get_record_list($type, $to_join, $select = "*", $where = [], $order = [], $limit = '', $offset = 0, $having = '') {
+	public function get_record_list($type, $to_join, $select = "*", $where = [], $order = [], $limit = '', $offset = 0, $having = '', $simple = false) {
 		$sql = $this->sql($type, $to_join, $select, $where);
 		//is sort type set? else use default
 		$order = strlen(xpost('sort_by')) ? $this->sort(xpost('sort_by'), $type) : (!empty($order) ? $order : $sql['order']);
 		$posts = $this->get_rows($sql['table'], 0, $sql['joins'], $sql['select'], $where, $order, $sql['group_by'], $limit, $offset, $having);
-		return $this->prepare_posts($posts);
+		return $this->prepare_posts($posts, $simple);
 	}
 
 
-	private function prepare_posts($posts) {
+	public function get_total_record($type, $where = [], $joins = [], $having = '') {
+		$table = $type.'s '.$type[0]; //posts p OR comments c 
+		return $this->count_rows($table, $where, 0, $joins, $having);
+	}
+
+
+	private function prepare_posts($posts, $simple) {
 		$data = [];
         $posts = is_array($posts) ? $posts : (array) $posts;
         foreach ($posts as $row) {
-        	$data[] = $this->prepare_post($row);
+        	$data[] = $this->prepare_post($row, $simple);
         }
         return $data;
     }
@@ -149,7 +225,7 @@ class Post_model extends Core_Model {
     	$feat_image = $extracted ? image_thumb($this->img_upload_path.'/'.$extracted[0]) : '';
     	//remove all tags from content and truncate to some words
     	$raw_content = strip_tags($row['content']);
-    	$max = $simple ? 10 : 30;
+    	$max = $simple ? 7 : 30;
     	//are we viewing single post?
     	$is_post_view = (xpost('is_post_view') == 1);
     	//simple (eg for sidebar) ?
@@ -175,6 +251,9 @@ class Post_model extends Core_Model {
 		}
     	//remove things we don't need
     	unset($row['voters']);
+    	//following post?
+    	$followed_posts = $this->session->tempdata('followed_posts') ?? [];
+    	$followed = array_key_exists($row['id'], $followed_posts);
     	$data = array_merge($row, 
     		[
     			'votes' => shorten_number($row['votes']), 
@@ -184,7 +263,8 @@ class Post_model extends Core_Model {
     			'comment_count' => isset($row['comment_count']) ? shorten_number($row['comment_count']) : 0, 
     			'truncated' => $truncated, 
     			'content' => $content, 
-    			'feat_image' => $feat_image
+    			'feat_image' => $feat_image,
+    			'followed' => $followed
     		]
     	);
         return $data;

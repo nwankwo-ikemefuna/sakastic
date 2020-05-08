@@ -32,14 +32,28 @@
                             <li class="nav-item active">
                                 <a class="nav-link" href="<?php echo base_url(); ?>">Home</a>
                             </li>
-                            <?php if ($this->session->user_loggedin) { ?>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Posts</a>
+                                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                                    <?php 
+                                    if ($this->session->user_loggedin) { ?>
+                                        <a href="<?php echo base_url('?user_posts='.$this->session->user_username); ?>" class="dropdown-item">My Posts</a>
+                                        <?php 
+                                    } ?>
+                                    <a href="<?php echo base_url('?type=recent'); ?>" class="dropdown-item">Recent Posts</a>
+                                    <a href="<?php echo base_url('?type=trending'); ?>" class="dropdown-item">Trending Posts</a>
+                                    <a href="<?php echo base_url('?type=followed'); ?>" class="dropdown-item">Followed Posts</a>
+                                    <a href="<?php echo base_url(); ?>" class="dropdown-item">All Posts</a>
+                                </div>
+                            </li>
+                            <?php 
+                            if ($this->session->user_loggedin) { ?>
                                 <li class="nav-item dropdown profile_dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <img src="<?php echo user_avatar(); ?>" width="40" height="40" class="rounded-circle">
+                                        <img src="<?php echo user_avatar(); ?>" width="32" height="32" class="rounded-circle">
                                     </a>
-                                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                                    <div class="dropdown-menu header_dropdown" aria-labelledby="navbarDropdownMenuLink">
                                         <a href="<?php echo base_url('user/profile'); ?>" class="dropdown-item"><i class="fa fa-user-o" aria-hidden="true"></i> Profile</a>
-                                        <a href="<?php echo base_url('?user_posts='.$this->session->user_username); ?>" class="dropdown-item"><i class="fa fa-book" aria-hidden="true"></i> My Posts</a>
                                         <a href="<?php echo base_url('logout'); ?>" class="dropdown-item"><i class="fa fa-sign-out" aria-hidden="true"></i> Logout</a>
                                     </div>
                                 </li>
@@ -64,7 +78,7 @@
             <div class="container page_container">
                 <?php 
                 if ($this->show_disclaimer) { ?>
-                    <div class="disclaimer">
+                    <div class="disclaimer hide">
                         <span class="info_icon">
                             <i class="fa fa-info"></i>
                         </span>

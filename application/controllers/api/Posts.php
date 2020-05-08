@@ -11,29 +11,9 @@ class Posts extends Core_controller {
     }
 
 
-    private function filter() {
-        $where = [];
-        //user posts?
-        $username = xpost('user');
-        if (strlen($username)) {
-            //does the user even exists?
-            $row = $this->user_model->get_details($username, 'username', [], "id");
-            if ($row) {
-                $where = ['p.user_id' => $row->id];
-            }
-        }
-        //searching?
-        if (strlen(xpost('search'))) {
-            $this_where = $this->post_model->search();
-            $where = array_merge($where, [$this_where => null]);
-        } 
-        return $where;
-    }
-
-
     public function list($page = 0) {
-        $where = $this->filter();
-        $this->post_lib->list($where, $page);
+        $filter = $this->post_model->filter();
+        $this->post_lib->list($page, $filter['where'], $filter['order'], $filter['count_joins']);
     }
 
 
@@ -57,15 +37,19 @@ class Posts extends Core_controller {
     }
 
 
+    public function follow() {
+        $this->post_lib->follow();
+    }
+
+
     public function delete() {
         $this->post_lib->delete();
     }
 
 
-    private function post_type($where, $order, $having = '') {
-        $limit = 5;
+    private function post_type($where, $order, $having = '', $limit = 5) {
         $select = "p.id, p.content, p.votes, p.date_created ## avatar, username, comment_count";
-        $data = $this->post_model->get_record_list('post', ['u', 'c'], $select, $where ,$order, $limit, 0, $having);
+        $data = $this->post_model->get_record_list('post', ['u', 'c'], $select, $where ,$order, $limit, 0, $having, true);
         json_response($data);
     }
 
@@ -76,9 +60,14 @@ class Posts extends Core_controller {
 
 
     public function trending() {
-        //this week. skip if no comment
-        $where = ['YEARWEEK(p.date_created) = YEARWEEK(NOW())' => ''];
-        $this->post_type($where, ['COUNT(c.post_id)' => 'desc'], 'COUNT(c.post_id) > 0');
+        $query = $this->post_model->trending_query();
+        $this->post_type($query['where'], $query['order'], $query['having']);
+    }
+
+
+    public function followed() {
+        $query = $this->post_model->followed_query();
+        $this->post_type($query['where'], ['p.date_created' => 'desc']);
     }
 
 }

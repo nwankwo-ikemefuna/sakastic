@@ -15,11 +15,11 @@ class Post_lib {
     }
 
 
-    public function list($where, $page) {
+    public function list($page, $where, $order = [], $count_joins = [], $having = '') {
         $per_page = 3;
         $page = paginate_offset($page, $per_page);
-        $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, [], $per_page, $page);
-        $total_records = $this->ci->common_model->count_rows($this->table_with_alias, $where);
+        $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, $order, $per_page, $page, $having);
+        $total_records = $this->ci->post_model->get_total_record($this->type, $where, $count_joins, $having);
         $data = paginate($records, $total_records, $per_page, "api/{$this->type}s/list");
         json_response($data);
     }
@@ -112,6 +112,29 @@ class Post_lib {
         //election time!
         $data = $this->ci->crud->vote($row->votes, $row->voters);
         $this->ci->common_model->update($this->table, $data, ['id' => $id]);
+        //get updated record and prepare for sending
+        $row = $this->ci->post_model->get_details($this->type, $id, 'id', ['all']);
+        $data = $this->ci->post_model->prepare_post($row);
+        json_response($data);
+    }
+
+
+    public function follow() {
+        $id = xpost('id');
+        $this->ci->form_validation->set_rules('id', 'ID', 'trim|required');
+        if ($this->ci->form_validation->run() === FALSE)
+            json_response(validation_errors(), false);
+        $followed_posts = $this->ci->session->tempdata('followed_posts') ?? [];
+        //already following post?
+        if ( ! array_key_exists(xpost('id'), $followed_posts)) {
+            //not following, follow
+            $followed_posts[$id] = date('Y-m-d H:i:s');
+            $this->ci->session->set_tempdata('followed_posts', $followed_posts, FOLLOWED_POST_TTL);
+        } else {
+            //following, unfollow
+            unset($followed_posts[$id]);
+            $this->ci->session->set_tempdata('followed_posts', $followed_posts, FOLLOWED_POST_TTL);
+        }
         //get updated record and prepare for sending
         $row = $this->ci->post_model->get_details($this->type, $id, 'id', ['all']);
         $data = $this->ci->post_model->prepare_post($row);

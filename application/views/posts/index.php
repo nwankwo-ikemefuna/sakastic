@@ -13,7 +13,7 @@
             <span class="input-group-prepend">
                 <button type="button" id="cancel_search" class="btn " title="Cancel search"><i class="fa fa-remove"></i></button>
             </span>
-            <input type="text" name="search" class="form-control" value="<?php echo urldecode(xget('search')); ?>" placeholder="what are you looking for?">
+            <input type="text" id="search_post_field" class="form-control" value="<?php echo urldecode(xget('search')); ?>" placeholder="what are you looking for?">
             <span class="input-group-append">
                 <button type="button" id="search_posts" class="btn" title="Search posts"><i class="fa fa-search"></i></button>
             </span>
@@ -26,12 +26,13 @@
             </div>
             <?php
             $options = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'voted' => 'Most upvoted', 'popular' => 'Most commented'];
-            xform_select('sort_by', 'newest', false, ['options' => $options, 'blank' => false, 'sp' => false]); ?>
+            xform_select('', 'newest', false, ['options' => $options, 'blank' => false, 'sp' => false, 'extra' => ['id' => 'sort_posts']]); ?>
         </div>
     </div>
 </div>
 
 <input type="hidden" id="user_posts" value="<?php echo xget('user_posts'); ?>">
+<input type="hidden" id="type" value="<?php echo xget('type'); ?>">
 <input type="hidden" id="post_view" value="0">
 
 <h6 id="posts_info" style="display: none;"></h6>
