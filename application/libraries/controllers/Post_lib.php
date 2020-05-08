@@ -18,7 +18,7 @@ class Post_lib {
     public function list($where, $page) {
         $per_page = 3;
         $page = paginate_offset($page, $per_page);
-        $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, $per_page, $page);
+        $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, [], $per_page, $page);
         $total_records = $this->ci->common_model->count_rows($this->table_with_alias, $where);
         $data = paginate($records, $total_records, $per_page, "api/{$this->type}s/list");
         json_response($data);
@@ -151,7 +151,7 @@ class Post_lib {
         $data['id'] = $id;
         $data['type'] = $this->type;
         $data['content'] = $this->ci->post_model->get_details($this->type, $id, 'id', [], "content")->content;
-        $this->ci->load->view('posts/view', $data);
+        $this->ci->load->view('posts/view_ajax', $data);
     }
 
 
@@ -162,8 +162,7 @@ class Post_lib {
         $data['type'] = $this->type;
         $data['row'] = $row;
         $data['reply_type'] = $this->type == 'post' ? 'post' : ($row->parent_id == 0 ? 'comment' : 'reply');
-        // var_dump($row->parent_id); die;
-        $this->ci->load->view('posts/edit', $data);
+        $this->ci->load->view('posts/edit_ajax', $data);
     }
 
 }

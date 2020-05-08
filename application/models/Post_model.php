@@ -119,15 +119,15 @@ class Post_model extends Core_Model {
 
 	public function get_details($type, $id, $by = 'id', $to_join = [], $select = "*", $trashed = 0) {
 		$sql = $this->sql($type, $to_join, $select);
-		return $this->get_row($sql['table'], $id, $by, $trashed, $sql['joins'], $sql['select']);
+		return $this->get_row($sql['table'], $id, $by, $trashed, $sql['joins'], $sql['select'], [], $sql['group_by']);
 	}
 
 
-	public function get_record_list($type, $to_join, $select = "*", $where = [], $limit = '', $offset = 0) {
+	public function get_record_list($type, $to_join, $select = "*", $where = [], $order = [], $limit = '', $offset = 0, $having = '') {
 		$sql = $this->sql($type, $to_join, $select, $where);
 		//is sort type set? else use default
-		$order = strlen(xpost('sort_by')) ? $this->sort(xpost('sort_by'), $type) : $sql['order'];
-		$posts = $this->get_rows($sql['table'], 0, $sql['joins'], $sql['select'], $where, $order, $sql['group_by'], $limit, $offset);
+		$order = strlen(xpost('sort_by')) ? $this->sort(xpost('sort_by'), $type) : (!empty($order) ? $order : $sql['order']);
+		$posts = $this->get_rows($sql['table'], 0, $sql['joins'], $sql['select'], $where, $order, $sql['group_by'], $limit, $offset, $having);
 		return $this->prepare_posts($posts);
 	}
 
@@ -142,32 +142,45 @@ class Post_model extends Core_Model {
     }
 
 
-    public function prepare_post($row) {
+    public function prepare_post($row, $simple = false) {
         $row = is_array($row) ? $row : (array) $row;
         //get thumbnail of first image in content if any to use as featured image
     	$extracted = $this->summernote->extract($row['content']);
     	$feat_image = $extracted ? image_thumb($this->img_upload_path.'/'.$extracted[0]) : '';
     	//remove all tags from content and truncate to some words
     	$raw_content = strip_tags($row['content']);
-    	$max = 30;
-    	//if post has at least 1 image or words > $max, we truncate
-    	if ($extracted || str_word_count($raw_content) > $max) {
-    		$truncated = true;
-    		$content = word_limiter($raw_content, $max);
-    		//remove content since we need only snippet
-    		unset($row['content']);
-    	} else {
-    		$truncated = false;
-    		$content = $row['content'];
-    	}
+    	$max = $simple ? 10 : 30;
+    	//are we viewing single post?
+    	$is_post_view = (xpost('is_post_view') == 1);
+    	//simple (eg for sidebar) ?
+	    if ($simple) {
+	    	$truncated = true;
+	    	$content = word_limiter($raw_content, $max);
+	    } else {
+	    	if ($is_post_view) {
+	    		$truncated = false;
+		    	$content = $row['content'];
+		    } else {
+		    	//if post has at least 1 image or words > $max, we truncate
+		    	if ($extracted || str_word_count($raw_content) > $max) {
+		    		$truncated = true;
+		    		$content = word_limiter($raw_content, $max);
+		    		//remove content since we need only snippet
+		    		unset($row['content']);
+		    	} else {
+		    		$truncated = false;
+		    		$content = $row['content'];
+		    	}
+		    }
+		}
     	//remove things we don't need
     	unset($row['voters']);
     	$data = array_merge($row, 
     		[
     			'votes' => shorten_number($row['votes']), 
-    			'user_votes' => shorten_number($row['user_votes']), 
-    			'user_posts' => shorten_number($row['user_posts']), 
-    			'user_comments' => shorten_number($row['user_comments']), 
+    			'user_votes' => isset($row['user_votes']) ? shorten_number($row['user_votes']) : '', 
+    			'user_posts' => isset($row['user_posts']) ? shorten_number($row['user_posts']) : '', 
+    			'user_comments' => isset($row['user_comments']) ? shorten_number($row['user_comments']) : '', 
     			'comment_count' => isset($row['comment_count']) ? shorten_number($row['comment_count']) : 0, 
     			'truncated' => $truncated, 
     			'content' => $content, 

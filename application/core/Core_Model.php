@@ -45,7 +45,7 @@ class Core_Model extends CI_Model {
      * @param  bool         $ajax     [whether to use db or datatables class]
      * @return void
      */
-    private function prepare_query($table, $trashed = 0, $joins = [], $select = '', $where = [], $order = null, $group_by = '', $limit = '', $offset = 0, $ajax = false) {
+    private function prepare_query($table, $trashed = 0, $joins = [], $select = '', $where = [], $order = null, $group_by = '', $limit = '', $offset = 0, $having = '', $ajax = false) {
         $obj = $ajax ? 'datatables' : 'db';
         $alias = $this->table_alias($table);
         //select is not set? Select all from main table
@@ -89,6 +89,10 @@ class Core_Model extends CI_Model {
             $group_by = strlen($group_by) ? $group_by : $alias.'.id';
             $this->$obj->group_by($group_by);
         }
+        //having
+        if (strlen($having)) {
+            $this->$obj->having($having);
+        }
         if (strlen($limit)) 
             $this->$obj->limit($limit, $offset);
     }
@@ -104,7 +108,7 @@ class Core_Model extends CI_Model {
             $by = strlen($by) ? $by : 'id';
             $where[$alias.'.'.$by] = $id;
         }
-        $this->prepare_query($table, $trashed, $joins, $select, $where, -1, '-');
+        $this->prepare_query($table, $trashed, $joins, $select, $where, -1, $group_by);
         $return = $return == 'object' ? 'row' : 'row_array';
         return $this->db->get()->$return();
     }
@@ -114,8 +118,8 @@ class Core_Model extends CI_Model {
      * get rows
      * @return object
      */
-    public function get_rows($table, $trashed = 0, $joins = [], $select = '', $where = [], $order = [], $group_by = '', $limit = '', $offset = 0, $return = 'object') {
-        $this->prepare_query($table, $trashed, $joins, $select, $where, $order, $group_by, $limit, $offset);
+    public function get_rows($table, $trashed = 0, $joins = [], $select = '', $where = [], $order = [], $group_by = '', $limit = '', $offset = 0, $having = '', $return = 'object') {
+        $this->prepare_query($table, $trashed, $joins, $select, $where, $order, $group_by, $limit, $offset, $having);
         $return = $return == 'object' ? 'result' : 'result_array';
         return $this->db->get()->$return();
     }

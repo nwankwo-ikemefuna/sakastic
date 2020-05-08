@@ -11,7 +11,15 @@
 
 <h6 id="comments_info_<?php echo $pc_id; ?>" class="mt-2"></h6>
 <div id="comments_section_<?php echo $pc_id; ?>" class="collapse show">
-	<div id="comments_<?php echo $pc_id; ?>" class="collapse show">
+	<div class="input-group" id="sort_comments_group_<?php echo $pc_id; ?>" style="display: none;">
+        <div class="input-group-prepend">
+            <span class="input-group-text comment_sort_input_text">Sort by</span>
+        </div>
+		<select class="sort_comments" width="100" id="sort_comments_<?php echo $pc_id; ?>">
+		  <!-- Render options dymanically-->
+		</select>
+	</div>
+	<div id="comments_<?php echo $pc_id; ?>" class="collapse show mt-2">
 		Comments loading... <i class="fa fa-spinner fa-spin"></i>
 	</div>
 	<div id="comments_pagination_<?php echo $pc_id; ?>" class="pagination-area"></div>

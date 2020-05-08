@@ -1,3 +1,7 @@
-<?php echo $content; ?>
-
-<p class="mt-1"><a class="theme_link_red text-bold clickable reload_post" data-id="<?php echo $id; ?>" data-type="<?php echo $type; ?>">Read less</a></p>
+<input type="hidden" id="id" value="<?php echo $id; ?>">
+<input type="hidden" id="user_posts" value="">
+<input type="hidden" id="is_post_view" value="1">
+<div id="post_view">
+	Post loading... <i class="fa fa-spinner fa-spin"></i>
+    <!-- Render posts async -->
+</div>

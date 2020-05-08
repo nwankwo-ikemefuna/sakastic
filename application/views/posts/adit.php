@@ -18,19 +18,20 @@ echo form_open(NULL, $form_attributes);
 	if ($type == 'post') { ?>
 		<div class="smt_wrapper">
 			<?php
+			$img_max_size = 200;
 			//TL;DR
 			//on edit, content will be loaded into textarea when page is fully loaded to prevent rendering html tags before summernote initializes, so the value field is left empty
 			xform_input('content', 'textarea', '', false, ['rows' => 5, 'class' => 'smt_'.$smt_id]);
 			$this->summernote->config([
 				'path' => 'posts', 
-				'size' => 100, 
+				'size' => $img_max_size, 
 				'resize_width' => 100, 
 				'resize_height' => 100,
 				'content' => adit_value($row, 'content')
 			]); ?>
 		</div>
 		<?php
-		xform_help(['help' => 'Note: Images above 100kb will not be uploaded.']); 
+		xform_help(['help' => "Note: Images above {$img_max_size}kb will not be uploaded."]); 
 	} else { 
 		//regular textarea
 		xform_input('content', 'textarea', adit_value($row, 'content', '', true), false, ['rows' => 3, 'class' => '']);

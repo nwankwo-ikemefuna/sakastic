@@ -159,6 +159,10 @@ body {
 .post_extra a {
   cursor: pointer;
 }
+.post_extra a.view_link {
+  color: inherit;
+  text-decoration: none;
+}
 .social_share .social_btns a {
   display: inline-block;
   text-align: center;
@@ -206,4 +210,21 @@ body {
 }
 .card_header_comment {
   background: #b3d7ff17;
+}
+.comment_sort_input_text {
+  padding: 0 5px;
+}
+.sb_post_item {
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+}
+.sb_post_item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.sb_post_item .content {
+  color: inherit;
+}
+.sb_post_item .sb_post_info small {
+  color: #9a9fa4;
 }

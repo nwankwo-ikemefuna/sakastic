@@ -61,4 +61,24 @@ class Posts extends Core_controller {
         $this->post_lib->delete();
     }
 
+
+    private function post_type($where, $order, $having = '') {
+        $limit = 5;
+        $select = "p.id, p.content, p.votes, p.date_created ## avatar, username, comment_count";
+        $data = $this->post_model->get_record_list('post', ['u', 'c'], $select, $where ,$order, $limit, 0, $having);
+        json_response($data);
+    }
+
+
+    public function recent() {
+        $this->post_type([], ['p.date_created' => 'desc']);
+    }
+
+
+    public function trending() {
+        //this week. skip if no comment
+        $where = ['YEARWEEK(p.date_created) = YEARWEEK(NOW())' => ''];
+        $this->post_type($where, ['COUNT(c.post_id)' => 'desc'], 'COUNT(c.post_id) > 0');
+    }
+
 }

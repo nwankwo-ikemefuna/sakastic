@@ -17,6 +17,19 @@ class Posts extends Core_controller {
     }
 
 
+    public function view($id) {
+        $this->show_page_title = false;
+        $row = $this->post_model->get_details('post', $id, 'id', ['all']);
+        //does post even exist?
+        if ( ! $row) redirect(''); //go home
+        $page_title = word_limiter(strip_tags($row->content), 20);
+        $this->web_header($page_title);
+        $data['id'] = $id;
+        $this->load->view('posts/view', $data);
+        $this->web_footer('post_view');
+    }
+
+
     public function view_ajax($id) {
         $this->post_lib->view_ajax($id);
     }

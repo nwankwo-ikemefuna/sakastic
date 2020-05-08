@@ -3,11 +3,12 @@ jQuery(document).ready(function ($) {
 
   /* ================ Posts =============== */
 
-  //object to hold our post data
+  //object to hold post data
   var post_data = {
     search: '',
     sort_by: 'newest',
-    user: ''
+    user: '',
+    id: ''
   },
   post_container = function(row) {
     return `<div class="post_container m-b-15" id="post_con_${row.id}">
@@ -34,21 +35,44 @@ jQuery(document).ready(function ($) {
     }
   },
   posts_url = 'api/posts/list',
-  elem = 'posts',
-  pagination = 'pagination';
+  posts_elem = 'posts',
+  posts_pagination = 'posts_pagination';
   //params from get
   post_data.user = $('#user_posts').val();
   post_data.search = $('[name="search"]').val();
   if (current_page == 'home') {
-    paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
+    paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
   }
-  ci_paginate(posts_url, elem, post_container, pagination, post_data, elem, posts_callback);
+  ci_paginate(posts_url, posts_elem, post_container, posts_pagination, post_data, posts_elem, posts_callback);
+
+  //post view
+  if (current_page == 'post_view') {
+    var id = $('#id').val(),
+        is_post_view = $('#is_post_view').val(),
+        post_view_callback = function(jres) {
+          if (jres.status) {
+            var row = jres.body.msg;
+            var post_container = `<div class="post_container m-b-15" id="post_con_${id}">${post_widget(row, 'post')}</div>`;
+            $('#post_view').html(post_container);
+            //load comments by triggering the click event
+            $('.comment_replies').trigger('click');
+          } else {
+            $('#post_view').html('<h6 class="text-danger">Something went wrong. Please refresh this page.</h6>');
+          }
+        };
+    fetch_data_ajax(base_url+'api/posts/view', {id, is_post_view}, 'POST', post_view_callback);
+  }
 
   //post action callback
-  var hard_post_action = function(jres, toast_title, toast_success) {
+  var hard_post_action = function(jres, toast_title, toast_success, redirect = false) {
     if (jres.status) {
       show_toast(toast_title, toast_success, 'success');
-      paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_callback, null, true, 'Loading');
+      if (redirect) {
+        setTimeout(function(){
+          location.href = base_url+'?user_posts='+username;
+        }, 3000);
+      }
+      paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Loading');
     } else {
       show_toast(toast_title, jres.error, 'danger');
     }
@@ -63,7 +87,9 @@ jQuery(document).ready(function ($) {
 
   //deleting
   $(document).on('click', '.delete_post.post', function() {
-    delete_post_action(this, hard_post_action, 'Delete Notice', 'Successful');
+    //if post view, redirect to user posts on success
+    var redirect = ($('#is_post_view').val() == 1);
+    delete_post_action(this, hard_post_action, 'Delete Notice', 'Successful', redirect);
   });
 
   //searching
@@ -71,7 +97,7 @@ jQuery(document).ready(function ($) {
     var search = $('[name="search"]').val();
     if (search.length) {
       post_data.search = search;
-      paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_callback, null, true, 'Running search');
+      paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Running search');
     }
   });
 
@@ -81,7 +107,7 @@ jQuery(document).ready(function ($) {
     if (search.length) {
       $('[name="search"]').val('');
       post_data.search = '';
-      paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_callback, null, true, 'Applying changes');
+      paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Applying changes');
     }
   });
 
@@ -89,7 +115,7 @@ jQuery(document).ready(function ($) {
   $(document).on('change', '[name="sort_by"]', function() {
     var sort_by = $(this).val();
     post_data.sort_by = sort_by;
-    paginate_data(posts_url, elem, post_container, pagination, 0, post_data, posts_callback, null, true, 'Applying sort');
+    paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Applying sort');
   });
 
   //reveal share butts
@@ -115,39 +141,33 @@ jQuery(document).ready(function ($) {
         comment_data = {post_id, comment_id, sort_by: 'oldest'};
     $('#'+container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
 
-      //initialize summernote: 
-      //NB: Uncomment to allow 
-      // summernote_init('.smt_add_comment_'+pc_id, {picture: true}, {height: 100});
-
-      var comment_sort_options = function(current_val) {
-        var sorts = {
-            newest: 'Newest First',
-            oldest: 'Oldest First',
-            voted: 'Most Upvoted',
-            popular: 'Most Replied'
-          },
-          options = "", selected = "";
-        Object.keys(sorts).map(function(value) {
-          selected = (value == current_val)  ? 'selected' : '';
-          options += `<option ${selected} value="${value}">${sorts[value]}</option>`;
-        });
-        return options;
-      }
-
       var comment_container = function(row) {
           return `<div class="post_container m-b-15" id="comment_con_${row.comment_id}">
               ${post_widget(row, 'comment')}</div>`;
         },
+        comment_sort_options = function(current_val) {
+          var sorts = {
+              newest: 'Newest first',
+              oldest: 'Oldest first',
+              voted: 'Most upvoted',
+              popular: 'Most replied'
+            },
+            options = "", selected = "";
+          Object.keys(sorts).map(function(value) {
+            selected = (value == current_val)  ? 'selected' : '';
+            options += `<option ${selected} value="${value}">${sorts[value]}</option>`;
+          });
+          return options;
+        },
         comments_callback = function(jres) {
           var count = jres.body.msg.total_rows_formatted,
             info_msg = (type == 'post' ? 'Comments' : 'Replies') + ` (${count})`;
-            info_msg += count > 0 ? ` <span class="m-l-10"><i class="fa fa-cog text-secondary f-s-11"></i> <a class="text-bold clickable" data-toggle="collapse" data-target="#comments_section_${pc_id}">hide/show</a></span>
-              <span class="m-l-10"><i class="fa fa-cog text-secondary f-s-11"></i> sort by:
-                <select class="sort_comments" width="100">
-                  ${comment_sort_options(comment_data.sort_by)}
-                </select>
-              </span>` : 
+            info_msg += count > 0 ? ` <span class="m-l-10"><i class="fa fa-eye-slash text-secondary"></i> <a class="text-primary text-bold clickable f-s-14" data-toggle="collapse" data-target="#comments_section_${pc_id}">Hide/show</a></span>` : 
             '';
+          if (count > 0) {
+            $('#sort_comments_group_'+pc_id).show();
+            $('#sort_comments_'+pc_id).html(comment_sort_options(comment_data.sort_by));
+          }
           $('#comments_info_'+pc_id).html(info_msg);
         },
         comments_url = 'api/comments/list',
@@ -210,6 +230,11 @@ jQuery(document).ready(function ($) {
         if (scroll_to) {
           find_element('#'+container);
         }
+        //if type is post on view page, load comments by triggering the click event
+        var is_post_view = $('#is_post_view').val();
+        if (is_post_view == 1 && type == 'post') {
+          $('.comment_replies').trigger('click');
+        }
       } else {
         if (toast_title.length) {
           show_toast(toast_title, jres.error, 'danger');
@@ -236,6 +261,8 @@ jQuery(document).ready(function ($) {
         //clear form fields
         content.summernote('reset');
         container.find('[name="smt_images"]').val('');
+      } else {
+        content.val('');
       }
     }
     var form_data = new FormData(obj);
@@ -243,12 +270,12 @@ jQuery(document).ready(function ($) {
   }
 
   //deleting
-  function delete_post_action(obj, hard_callback, toast_title, toast_success) {
+  function delete_post_action(obj, hard_callback, toast_title, toast_success, redirect = false) {
     if (!user_loggedin(login_prompt)) return false;
     if (!confirm('Sure to delete?')) return false;
     var callback = function(jres) {
       if (typeof hard_callback === "function") {
-        hard_callback(jres, toast_title, toast_success);
+        hard_callback(jres, toast_title, toast_success, redirect);
       }
     }
     var type = $(obj).data('type'),
@@ -265,7 +292,10 @@ jQuery(document).ready(function ($) {
     var type = $(this).data('type'),
         controller = type+'s',
         container = $(this).closest('.post_container').attr('id'),
+        is_post_view = $('#is_post_view').val(),
         form_data = new FormData(this);
+    //appendages
+    form_data.append('is_post_view', is_post_view);
     soft_post_action(type, 'api/'+controller+'/edit', form_data, container, true, true, true, true, 'Edit Notice');
   });
 
@@ -274,8 +304,9 @@ jQuery(document).ready(function ($) {
     var type = $(this).data('type'),
         id = $(this).data('id'),
         container = $(this).closest('.post_container').attr('id'),
-        controller = type+'s';
-    soft_post_action(type, 'api/'+controller+'/view', {id}, container);
+        controller = type+'s',
+        is_post_view = $('#is_post_view').val();
+    soft_post_action(type, 'api/'+controller+'/view', {id, is_post_view}, container);
   });
 
   //voting
@@ -284,8 +315,9 @@ jQuery(document).ready(function ($) {
     var type = $(this).data('type'),
         id = $(this).data('id'),
         container = $(this).closest('.post_container').attr('id'),
-        controller = type+'s';
-    soft_post_action(type, 'api/'+controller+'/vote', {id}, container, false, false, false, false, 'Vote Notice');
+        controller = type+'s',
+        is_post_view = $('#is_post_view').val();
+    soft_post_action(type, 'api/'+controller+'/vote', {id, is_post_view}, container, false, false, false, false, 'Vote Notice');
   });
 
   //Posts/comments/replies widget
@@ -322,7 +354,11 @@ jQuery(document).ready(function ($) {
         `</div>
         <div class="post_extra m-t-20">
           ${row.voted == 1 ? '<small class="d-block text-info">You upvoted this.</small>' : ''}
-          <span class="extra"><a class="comment_replies" data-type="${type}" data-post_id="${row.post_id}" data-comment_id="${row.comment_id}"><i class="fa fa-comments"></i> ${type == 'post' ? 'Comments' : 'Replies'}</a>
+          ` + 
+          (type == 'post' && $('#is_post_view').val() != 1 ?
+            `<span class="extra"><a class="view_link" href="${base_url}posts/view/${row.id}"><i class="fa fa-external-link"></i> View</a></span>` : ''
+          ) + 
+          `<span class="extra"><a class="comment_replies" data-type="${type}" data-post_id="${row.post_id}" data-comment_id="${row.comment_id}"><i class="fa fa-comments"></i> ${type == 'post' ? 'Comments' : 'Replies'}</a>
             <i class="fa fa-circle text-secondary d_icon"></i> ${row.comment_count}
           </span>
           <span class="extra">` + 
@@ -350,6 +386,44 @@ jQuery(document).ready(function ($) {
         <div id="${type}_action_container_${pc_id}"></div>
       </div>
     </div>`;
+  }
+
+
+
+  /* ================ Sidebar ================== */
+
+  sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {sidebar: 1});
+  sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {sidebar: 1});
+  // sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {sidebar: 1});
+  // sidebar_card_widget('sb_top_posters', 'api/posts/top_posters', {limit: 5});
+
+  function sidebar_card_widget(container, url, data = {}) {
+    var callback = function(jres) {
+      if (jres.status) {
+        var rows = jres.body.msg;
+        if (!$.isEmptyObject(rows)) {
+          var html = "";
+          $.each(rows, (i, row) => {
+            html += `
+            <div class="sb_post_item">
+              <a href="${base_url+'posts/view/'+row.id}" class="no_deco content">${row.content}</a>
+              <div class="sb_post_info">
+                <small>
+                  <i class="fa fa-user"></i>
+                  <a class="clickable" href="${base_url}?user_posts=${row.username}">${row.username}</a>
+                </small>
+                <small><i class="fa fa-comments"></i> ${row.comment_count}</small>
+                <small><i class="fa fa-thumbs-up"></i> ${row.votes}</small>
+                <small><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</small>
+              </div>
+            </div>`;
+          });
+          $('#'+container).closest('.card').show();
+          $('#'+container).html(html);
+        }
+      } 
+    };
+    fetch_data_ajax(base_url+url, data, 'POST', callback);
   }
 
 });

@@ -147,6 +147,9 @@ label.form-control-label small {
 .underline, .underline-link, .underline_text {
     text-decoration: underline !important;
 }
+.no_deco {
+    text-decoration: none !important;
+}
 
 /*  font size */
 

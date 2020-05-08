@@ -22,19 +22,21 @@
     <div class="<?php echo grid_col(12, '', 4); ?> p-b-10">
         <div class="input-group">
             <div class="input-group-prepend">
-                <span class="input-group-text">Sort by:</span>
+                <span class="input-group-text">Sort by</span>
             </div>
             <?php
-            $options = ['newest' => 'Newest First', 'oldest' => 'Oldest First', 'voted' => 'Most Upvoted', 'popular' => 'Most Commented'];
-            xform_select('sort_by', 'newest', false, ['options' => $options, 'blank' => false]); ?>
+            $options = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'voted' => 'Most upvoted', 'popular' => 'Most commented'];
+            xform_select('sort_by', 'newest', false, ['options' => $options, 'blank' => false, 'sp' => false]); ?>
         </div>
     </div>
 </div>
 
 <input type="hidden" id="user_posts" value="<?php echo xget('user_posts'); ?>">
+<input type="hidden" id="post_view" value="0">
 
 <h6 id="posts_info" style="display: none;"></h6>
 <div id="posts">
+    Posts loading... <i class="fa fa-spinner fa-spin"></i>
     <!-- Render posts async -->
 </div>
-<div id="pagination" class="pagination-area m-b-20"></div>
+<div id="posts_pagination" class="pagination-area m-b-20"></div>
