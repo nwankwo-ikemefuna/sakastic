@@ -17,6 +17,38 @@ class Posts extends Core_controller {
     }
 
 
+    public function sponsored() {
+        $limit = 3;
+        $query = $this->post_model->sponsored_query();
+        $data = $this->post_model->get_record_list('post', ['all'], '*',$query['where'], $query['order'], $limit);
+        json_response($data);
+    }
+
+
+    private function post_type($where, $order, $having = '', $limit = 5) {
+        $select = "p.id, p.content, p.votes, p.date_created ## avatar, username, comment_count";
+        $data = $this->post_model->get_record_list('post', ['u', 'c'], $select, $where ,$order, $limit, 0, $having, true);
+        json_response($data);
+    }
+
+
+    public function recent() {
+        $this->post_type([], ['p.date_created' => 'desc']);
+    }
+
+
+    public function trending() {
+        $query = $this->post_model->trending_query();
+        $this->post_type($query['where'], $query['order'], $query['having']);
+    }
+
+
+    public function followed() {
+        $query = $this->post_model->followed_query();
+        $this->post_type($query['where'], ['p.date_created' => 'desc']);
+    }
+
+
     public function view() {
         $this->post_lib->view();
     }
@@ -44,30 +76,6 @@ class Posts extends Core_controller {
 
     public function delete() {
         $this->post_lib->delete();
-    }
-
-
-    private function post_type($where, $order, $having = '', $limit = 5) {
-        $select = "p.id, p.content, p.votes, p.date_created ## avatar, username, comment_count";
-        $data = $this->post_model->get_record_list('post', ['u', 'c'], $select, $where ,$order, $limit, 0, $having, true);
-        json_response($data);
-    }
-
-
-    public function recent() {
-        $this->post_type([], ['p.date_created' => 'desc']);
-    }
-
-
-    public function trending() {
-        $query = $this->post_model->trending_query();
-        $this->post_type($query['where'], $query['order'], $query['having']);
-    }
-
-
-    public function followed() {
-        $query = $this->post_model->followed_query();
-        $this->post_type($query['where'], ['p.date_created' => 'desc']);
     }
 
 }

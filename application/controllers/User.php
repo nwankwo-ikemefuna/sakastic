@@ -46,7 +46,7 @@ class User extends Core_controller {
 		$data['is_me'] = $this->is_me;
 		$this->web_header('My Dashboard');
 		$this->load->view('user/index', $data); 
-		$this->web_footer('profile');
+		$this->web_footer('dash');
 	}
 
 

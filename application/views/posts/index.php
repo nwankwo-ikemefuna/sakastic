@@ -7,6 +7,11 @@
     require 'adit.php'; ?>
 </div>
 
+<h6 class="m-t-20">Sponsored Posts</h6>
+<div id="sponsored_posts" class="m-b-50" style="display: none;">
+    <!-- Render posts async -->
+</div>
+
 <div class="row m-t-20 m-b-20">
     <div class="<?php echo grid_col(12, '', 8); ?> p-b-10">
         <div class="input-group search_btn">
@@ -26,7 +31,7 @@
             </div>
             <?php
             $options = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'voted' => 'Most upvoted', 'popular' => 'Most commented'];
-            xform_select('', 'newest', false, ['options' => $options, 'blank' => false, 'sp' => false, 'extra' => ['id' => 'sort_posts']]); ?>
+            xform_select('', 'newest', false, ['options' => $options, 'blank' => false, 'extra' => ['id' => 'sort_posts']]); ?>
         </div>
     </div>
 </div>

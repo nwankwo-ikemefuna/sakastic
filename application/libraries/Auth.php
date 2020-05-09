@@ -46,7 +46,8 @@ class Auth {
 		}
 		//others
 		$data = array_merge($data, [
-			'user_loggedin' => TRUE
+			'user_loggedin' => TRUE,
+			'user_avatar' => $row->avatar
 		]);
 		return $data;
     } 

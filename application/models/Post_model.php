@@ -19,6 +19,7 @@ class Post_model extends Core_Model {
 			$select .= join_select($arr, 'comment_id', "c.id");
 			$select .= join_select($arr, 'comment_count', "COUNT(r.parent_id)");
 			$select .= join_select($arr, 'followed', "0");
+			$select .= join_select($arr, 'sponsored', "0");
 		}
 		$select .= join_select($arr, 'username', "u.username");
 		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
@@ -141,6 +142,17 @@ class Post_model extends Core_Model {
     }
 
 
+    public function sponsored_query() {
+    	//where sponsored is 1 and sponsorship is still active
+        $data['where'] = [
+        	'p.sponsored' => 1, 
+        	"p.date_created > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL p.sponsor_period DAY)" => ''
+        ];
+        $data['order'] = ['p.date_created' => 'desc']; //or rand???
+		return $data;
+    }
+
+
     public function filter() {
         $data = ['where' => [], 'order' => [], 'count_joins' => [], 'having' => ''];
         //user posts?
@@ -183,6 +195,8 @@ class Post_model extends Core_Model {
             //merge to previous where
             $where = array_merge($data['where'], [$this_where => null]);
         } 
+        //filter out sponsored posts
+        $data['where'] = array_merge($data['where'], ['p.sponsored' => 0]);
         return $data;
     }
 
@@ -222,7 +236,7 @@ class Post_model extends Core_Model {
         $row = is_array($row) ? $row : (array) $row;
         //get thumbnail of first image in content if any to use as featured image
     	$extracted = $this->summernote->extract($row['content']);
-    	$feat_image = $extracted ? image_thumb($this->img_upload_path.'/'.$extracted[0]) : '';
+    	$feat_image = $extracted ? base_url(image_thumb($this->img_upload_path.'/'.$extracted[0])) : '';
     	//remove all tags from content and truncate to some words
     	$raw_content = strip_tags($row['content']);
     	$max = $simple ? 7 : 30;
@@ -263,7 +277,7 @@ class Post_model extends Core_Model {
     			'comment_count' => isset($row['comment_count']) ? shorten_number($row['comment_count']) : 0, 
     			'truncated' => $truncated, 
     			'content' => $content, 
-    			'feat_image' => base_url($feat_image),
+    			'feat_image' => $feat_image,
     			'followed' => $followed
     		]
     	);

@@ -5,3 +5,7 @@
 	Post loading... <i class="fa fa-spinner fa-spin"></i>
     <!-- Render posts async -->
 </div>
+<h6 class="m-t-50">Sponsored Posts</h6>
+<div id="sponsored_posts" style="display: none;">
+    <!-- Render posts async -->
+</div>

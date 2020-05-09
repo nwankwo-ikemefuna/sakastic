@@ -139,7 +139,7 @@ body {
   padding: 10px;
   margin-bottom: 20px;
 }
-.disclaimer .info_icon, .post_info span, .post_extra .extra {
+.disclaimer {
   border-right: 2px solid #ddd;
   padding-right: 10px;
   margin-right: 10px;
@@ -186,6 +186,12 @@ body {
 }
 
 /*Posts*/
+.info_icon, .post_info span, .post_extra .extra {
+  border-right: 2px solid #ddd;
+  padding-right: 10px;
+  margin-right: 10px;
+  font-size: 14px;
+}
 .post_info span:last-child, .post_extra .extra:last-child {
   border-right: none;
   padding-right: 0;

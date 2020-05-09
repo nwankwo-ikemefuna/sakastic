@@ -11,9 +11,9 @@ jQuery(document).ready(function ($) {
     type: '',
     id: ''
   },
-  post_container = function(row) {
+  post_container = function(row, config = {}) {
     return `<div class="post_container m-b-15" id="post_con_${row.id}">
-        ${post_widget(row, 'post')}</div>`;
+        ${post_widget(row, 'post', config)}</div>`;
   },
   posts_callback = function(jres) {
     //viewing user posts?
@@ -46,10 +46,31 @@ jQuery(document).ready(function ($) {
   post_data.user = $('#user_posts').val();
   post_data.type = $('#type').val();
   post_data.search = $('#search_post_field').val();
-  if (['home', 'profile'].includes(current_page)) {
+  if (['home', 'dash'].includes(current_page)) {
     paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
   }
   ci_paginate(posts_url, posts_elem, post_container, posts_pagination, post_data, posts_elem, posts_callback);
+
+  //sponsored posts
+  if (['home', 'posts', 'post_view'].includes(current_page)) {
+    custom_post_request('api/posts/sponsored', 'sponsored_posts', {}, (current_page == 'post_view'));
+  }
+
+  function custom_post_request(url, container, data = {}, hide_actions = false) {
+    var callback = function(jres) {
+      if (jres.status) {
+        var rows = jres.body.msg;
+        if (!$.isEmptyObject(rows)) {
+          var html = "";
+          $.each(rows, (i, row) => {
+            html += post_container(row, {hide_actions: hide_actions});
+          });
+          $('#'+container).show().html(html);
+        }
+      } 
+    };
+    fetch_data_ajax(base_url+url, data, 'POST', callback);
+  }
 
   //post view
   if (current_page == 'post_view') {
@@ -58,10 +79,11 @@ jQuery(document).ready(function ($) {
         post_view_callback = function(jres) {
           if (jres.status) {
             var row = jres.body.msg;
-            var post_container = `<div class="post_container m-b-15" id="post_con_${id}">${post_widget(row, 'post')}</div>`;
+            var post_container = `<div class="post_container m-b-15" id="post_con_${id}">${post_widget(row, 'post', {hide_view: true})}</div>`;
             $('#post_view').html(post_container);
             //load comments by triggering the click event
-            $('.comment_replies').trigger('click');
+            //exclude sponsored posts
+            $('#post_view .comment_replies').trigger('click');
           } else {
             $('#post_view').html('<h6 class="text-danger">Something went wrong. Please refresh this page.</h6>');
           }
@@ -253,7 +275,7 @@ jQuery(document).ready(function ($) {
         //if type is post on view page, load comments by triggering the click event
         var is_post_view = $('#is_post_view').val();
         if (is_post_view == 1 && type == 'post') {
-          $('.comment_replies').trigger('click');
+          $('#post_view .comment_replies').trigger('click');
         }
       } else {
         if (toast_title.length) {
@@ -341,11 +363,13 @@ jQuery(document).ready(function ($) {
   });
 
   //Posts/comments/replies widget
-  function post_widget(row, type = 'post') {
+  function post_widget(row, type = 'post', config = {}) {
     var post_url = base_url+'posts/view/'+row.id,
       controller = type+'s',
       pc_id = row.post_id+'_'+row.comment_id,
-      user_posts_url = base_url+'?user_posts='+row.username;
+      user_posts_url = base_url+'?user_posts='+row.username,
+      hide_actions = config.hide_actions ? true : false,
+      hide_view = config.hide_view ? true : false;
     return `
     <div class="card">
       <div class="card-header post_info card_header_${type}">
@@ -360,6 +384,7 @@ jQuery(document).ready(function ($) {
           <a class="user_stats" href="${user_posts_url}" title="comments"><i class="fa fa-circle text-secondary"></i> ${row.user_comments}</a>
         </span>
         <span><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</span>
+        ${row.sponsored == 1 ? `<small class="text-muted float-sm-right d-inline-block">Sponsored</small>` : ''}
       </div>
       <div class="card-body">
         <div id="${type}_view_container_${row.id}" class="post_content">` + 
@@ -370,33 +395,38 @@ jQuery(document).ready(function ($) {
                   <img class="img_thumb float-sm-right" src="${row.feat_image}">
                 </div>` : ''}
               ${row.content}
-            </div>
-            <p class="mt-1">${ajax_page_link(type+'_view_container_'+row.id, controller+'/view_ajax/'+row.id, 'Read more', 'theme_link_red clickable text-bold', '', '', '', '', '', 0)}</p>` : 
+            </div>` + 
+            ( ! hide_actions ? 
+              `<p class="mt-1">${ajax_page_link(type+'_view_container_'+row.id, controller+'/view_ajax/'+row.id, 'Read more', 'theme_link_red clickable text-bold', '', '', '', '', '', 0)}</p>` : ''
+            ) : 
             `<div>${row.content}</div>`
           ) +
         `</div>
         <div class="post_extra m-t-20">
-          ${row.voted == 1 ? '<small class="d-none text-info">You upvoted this.</small>' : ''}
+          ${row.voted == 1 ? '<small class="d-none text-muted">You upvoted this.</small>' : ''}
           ` + 
-          (type == 'post' && $('#is_post_view').val() != 1 ?
+          (type == 'post' && ! hide_view ?
             `<span class="extra"><a class="view_link" href="${base_url}posts/view/${row.id}"><i class="fa fa-external-link"></i> View</a></span>` : ''
-          ) + 
-          `<span class="extra"><a class="comment_replies" data-type="${type}" data-post_id="${row.post_id}" data-comment_id="${row.comment_id}"><i class="fa fa-comments"></i> ${type == 'post' ? 'Comments' : 'Replies'}</a>
-            <i class="fa fa-circle text-secondary d_icon"></i> ${row.comment_count}
-          </span>
-          <span class="extra">` + 
-            (row.is_user_post == 0 ?
-              `<a class="vote" data-type="${type}" data-id="${row.id}"><i class="fa fa-thumbs-${row.voted == 1 ? 'down' : 'o-up'}"></i> ${row.voted == 1 ? 'Downvote' : 'Upvote'}</a>` : `<i class="fa fa-thumbs-up"></i> Upvotes`
-            ) + 
-            `<i class="fa fa-circle text-secondary d_icon"></i> ${row.votes}
-          </span>` +
-          (type == 'post' ?
-            `<span class="extra"><a class="follow_post" data-id="${row.id}"><i class="fa fa-bookmark${row.followed ? '' : '-o'}"></i> ${row.followed ? 'Unfollow' : 'Follow'}</a></span>` : ''
           ) +
-          (row.is_user_post == 1 ?
-            `<span class="extra">${ajax_page_link(type+'_action_container_'+pc_id, controller+'/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
-            <span class="extra"><a class="delete_post ${type}" data-type="${type}" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
-            ''
+          ( ! hide_actions ? 
+            `<span class="extra"><a class="comment_replies" data-type="${type}" data-post_id="${row.post_id}" data-comment_id="${row.comment_id}"><i class="fa fa-comments"></i> ${type == 'post' ? 'Comments' : 'Replies'}</a>
+              <i class="fa fa-circle text-secondary d_icon"></i> ${row.comment_count}
+            </span>
+            <span class="extra">` + 
+              (row.is_user_post == 0 ?
+                `<a class="vote" data-type="${type}" data-id="${row.id}"><i class="fa fa-thumbs-${row.voted == 1 ? 'down' : 'o-up'}"></i> ${row.voted == 1 ? 'Downvote' : 'Upvote'}</a>` : `<i class="fa fa-thumbs-up"></i> Upvotes`
+              ) + 
+              `<i class="fa fa-circle text-secondary d_icon"></i> ${row.votes}
+            </span>` +
+            (type == 'post' ?
+              `<span class="extra"><a class="follow_post" data-id="${row.id}"><i class="fa fa-bookmark${row.followed ? '' : '-o'}"></i> ${row.followed ? 'Unfollow' : 'Follow'}</a></span>` : ''
+            ) +
+            (row.is_user_post == 1 ?
+              `<span class="extra">${ajax_page_link(type+'_action_container_'+pc_id, controller+'/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
+              <span class="extra"><a class="delete_post ${type}" data-type="${type}" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
+              ''
+            ) 
+            : ''
           ) +
           (type == 'post' ?
             `<span class="social_share">
