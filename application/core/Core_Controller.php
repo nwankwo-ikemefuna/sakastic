@@ -33,7 +33,7 @@ class Core_Controller extends CI_Controller {
 		$this->ba_opts = [];
 		$this->show_sidebar = true;
 		$this->show_bcrumbs = true;
-		$this->show_page_title = true;
+		$this->show_page_title = false;
 		$this->show_disclaimer = false;
 		$this->bcrumbs = [];
 

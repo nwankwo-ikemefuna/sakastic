@@ -5,27 +5,75 @@ class User extends Core_controller {
 	public function __construct() {
 		parent::__construct();
 		$this->auth->login_restricted();
+		$this->usergroup = $this->session->user_usergroup; 
+		$this->is_admin = ($this->usergroup == ADMIN);
+
+		$this->user_details = $this->user_model->get_details($this->session->user_id, 'id', ['all']);
+		$this->is_me = true;
 	}
 
 	
 	public function index() { 
-		$view = 'portal/' . ( company_user() ? 'company' : 'customer') . '/index';
 		if ($this->session->user_password_set != 1) {
 			$reset_url = ajax_page_link('user/reset_pass', 'Reset it now', 'underline-link');
 			$this->session->set_flashdata('error_msg', 'You have not reset your default password. '.$reset_url);
 		}
-		$this->ajax_header('Dashboard');
-		$this->load->view($view); 
-		$this->ajax_footer();
+		$this->web_header('My Dashboard');
+		$this->load->view('user/index'); 
+		$this->web_footer();
+	}
+
+
+	protected function dash_header($page_title) {
+		$this->session->ajax_requested_page = get_requested_page();
+		$data['page_title'] = $page_title;
+		return $this->load->view('user/layout/dash_header', $data);
+	}
+	
+
+	protected function dash_footer($current_page = '') {
+		$data['current_page'] = $current_page;
+		return $this->load->view('user/layout/dash_footer', $data);
+	}
+
+
+	public function dashboard() { 
+		$this->page_scripts = ['posts'];
+		$this->show_sidebar = false;
+		$data['row'] = $this->user_details;
+		$data['is_me'] = $this->is_me;
+		$this->web_header('My Dashboard');
+		$this->load->view('user/index', $data); 
+		$this->web_footer('profile');
+	}
+
+
+	public function dash() { 
+		//buttons
+		$row = $this->user_model->get_details($this->session->user_username, 'username', ['all']);
+		$data['row'] = $this->user_details;
+		$data['is_me'] = $this->is_me;
+		$this->dash_header('');
+		$this->load->view('user/dash_ajax', $data);
+		$this->dash_footer();
+	}
+
+
+	public function profile() { 
+		$data['row'] = $this->user_details;
+		$data['is_me'] = $this->is_me;
+		$this->dash_header('My Profile');
+		$this->load->view('user/profile_ajax', $data);
+		$this->dash_footer();
 	}
 
 
 	public function reset_pass() { 
 		//buttons
 		$this->butts = ['save' => ['form' => 'reset_pass_form']];
-		$this->ajax_header('Reset Password');
-		$this->load->view('portal/account/reset_pass');
-		$this->ajax_footer();
+		$this->dash_header('Reset Password');
+		$this->load->view('user/reset_pass_ajax');
+		$this->dash_footer();
 	}
 
 

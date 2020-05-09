@@ -36,7 +36,7 @@ class Auth {
 		$fields = $tables = $this->ci->db->list_fields(T_USERS);
 		$data = [];
 		if ( ! $row) return;
-		$exclude = [];
+		$exclude = ['password', 'password_reset_code'];
 		//create keys from column names with prefix: user_
 		foreach ($fields as $field) {
 			//exclude us please

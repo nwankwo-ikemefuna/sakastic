@@ -46,7 +46,7 @@ jQuery(document).ready(function ($) {
   post_data.user = $('#user_posts').val();
   post_data.type = $('#type').val();
   post_data.search = $('#search_post_field').val();
-  if (current_page == 'home') {
+  if (['home', 'profile'].includes(current_page)) {
     paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
   }
   ci_paginate(posts_url, posts_elem, post_container, posts_pagination, post_data, posts_elem, posts_callback);
@@ -344,17 +344,20 @@ jQuery(document).ready(function ($) {
   function post_widget(row, type = 'post') {
     var post_url = base_url+'posts/view/'+row.id,
       controller = type+'s',
-      pc_id = row.post_id+'_'+row.comment_id;
+      pc_id = row.post_id+'_'+row.comment_id,
+      user_posts_url = base_url+'?user_posts='+row.username;
     return `
     <div class="card">
       <div class="card-header post_info card_header_${type}">
         <span>
-          <img src="${row.avatar}" width="28" height="28" class="rounded-circle">
+          <a class="clickable no_deco" href="${base_url}profile/${row.username}">
+            <img src="${base_url+row.avatar}" width="28" height="28" class="rounded-circle">
+          </a>
           ${ $('#user_posts').val().length == 0 ? 
-            `<a class="clickable" href="${base_url}?user_posts=${row.username}">${row.username}</a>` : row.username }
-          <a class="user_stats" title="votes"><i class="fa fa-circle text-secondary"></i> ${row.user_votes}</a>
-          <a class="user_stats" title="posts"><i class="fa fa-circle text-secondary"></i> ${row.user_posts}</a>
-          <a class="user_stats" title="comments"><i class="fa fa-circle text-secondary"></i> ${row.user_comments}</a>
+            `<a class="clickable no_deco" href="${base_url}profile/${row.username}">${row.username}</a>` : row.username }
+          <a class="user_stats" href="${user_posts_url}" title="votes"><i class="fa fa-circle text-secondary"></i> ${row.user_votes}</a>
+          <a class="user_stats" href="${user_posts_url}" title="posts"><i class="fa fa-circle text-secondary"></i> ${row.user_posts}</a>
+          <a class="user_stats" href="${user_posts_url}" title="comments"><i class="fa fa-circle text-secondary"></i> ${row.user_comments}</a>
         </span>
         <span><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</span>
       </div>
@@ -415,18 +418,20 @@ jQuery(document).ready(function ($) {
 
   /* ================ Sidebar ================== */
 
-  //trending posts
-  setTimeout(function() {
-    sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {sidebar: 1});
-  }, 2000);
-  //recent posts
-  setTimeout(function() {
-    sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {sidebar: 1});
-  }, 4000);
-  //followed posts
-  setTimeout(function() {
-    sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {sidebar: 1});
-  }, 6000);
+  if (['home', 'posts', 'post_view'].includes(current_page)) {
+    //trending posts
+    setTimeout(function() {
+      sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {sidebar: 1});
+    }, 2000);
+    //recent posts
+    setTimeout(function() {
+      sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {sidebar: 1});
+    }, 4000);
+    //followed posts
+    setTimeout(function() {
+      sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {sidebar: 1});
+    }, 6000);
+  }
 
   function sidebar_card_widget(container, url, data = {}) {
     var callback = function(jres) {
@@ -441,7 +446,7 @@ jQuery(document).ready(function ($) {
               <div class="sb_post_info">
                 <small>
                   <i class="fa fa-user"></i>
-                  <a class="clickable" href="${base_url}?user_posts=${row.username}">${row.username}</a>
+                  <a class="clickable no_deco" href="${base_url}profile/${row.username}">${row.username}</a>
                 </small>
                 <small><i class="fa fa-comments"></i> ${row.comment_count}</small>
                 <small><i class="fa fa-thumbs-up"></i> ${row.votes}</small>

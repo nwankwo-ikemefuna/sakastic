@@ -7,31 +7,44 @@ class User_model extends Core_Model {
 	}
 
 
-	public function sql($to_join = [], $select = "", $where = []) {
+	public function sql($to_join = [], $select = "*", $where = []) {
 		$arr = sql_select_arr($select);
 		$select =  $select != '*' ? $arr['main'] : "u.*";
-		$select .= join_select($arr, 'user_posts', "COUNT(p.user_id)");
-		$select .= join_select($arr, 'user_comments', "COUNT(c.user_id)");
-		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(p.votes, 0) + IFNULL(c.votes, 0))");
-		$select .= join_select($arr, 'avatar', "'".base_url(AVATAR_GENERIC)."'");
+		$select .= join_select($arr, 'user_posts', "up.user_posts");
+		$select .= join_select($arr, 'user_comments', "uc.user_comments");
+		$select .= join_select($arr, 'user_total_content', "SUM(IFNULL(up.user_posts, 0) + IFNULL(uc.user_comments, 0))");
+		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
+		$select .= join_select($arr, 'avatar', "'".AVATAR_GENERIC."'");
 		$joins = [];
 		//posts
 		if (in_array('p', $to_join) || in_array('all', $to_join)) {
 			$joins = array_merge($joins, 
-				[T_POSTS.' p' => ['p.user_id = u.id']]
+				["(
+					SELECT `user_id`, 
+						COUNT(`user_id`) AS user_posts, 
+						SUM(`votes`) AS user_votes
+				    FROM `".T_POSTS."`
+				    GROUP BY `user_id`
+				) `up`" => ["`up`.`user_id` = `u`.`id`", 'left', false]]
 			);
 		}
 		//comments
 		if (in_array('c', $to_join) || in_array('all', $to_join)) {
 			$joins = array_merge($joins, 
-				[T_COMMENTS.' c' => ['c.user_id = u.id']]
+				["(
+					SELECT `user_id`, 
+						COUNT(`user_id`) AS user_comments, 
+						SUM(`votes`) AS user_votes
+				    FROM `".T_COMMENTS."`
+				    GROUP BY `user_id`
+				) `uc`" => ["`uc`.`user_id` = `u`.`id`", 'left', false]]
 			);
 		}
 		return sql_data(T_USERS.' u', $joins, $select, $where);
 	}
 
 
-	public function get_details($id, $by = 'id', $to_join = [], $select = "", $trashed = 0) {
+	public function get_details($id, $by = 'id', $to_join = [], $select = "*", $trashed = 0) {
 		$sql = $this->sql($to_join, $select);
 		return $this->get_row($sql['table'], $id, $by, $trashed, $sql['joins'], $sql['select'], [], $sql['group_by']);
 	}

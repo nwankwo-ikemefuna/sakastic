@@ -48,12 +48,14 @@
                             </li>
                             <?php 
                             if ($this->session->user_loggedin) { ?>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo base_url('dashboard'); ?>">Dashboard</a>
+                                </li>
                                 <li class="nav-item dropdown profile_dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <img src="<?php echo user_avatar(); ?>" width="32" height="32" class="rounded-circle">
                                     </a>
                                     <div class="dropdown-menu header_dropdown" aria-labelledby="navbarDropdownMenuLink">
-                                        <a href="<?php echo base_url('user/profile'); ?>" class="dropdown-item"><i class="fa fa-user-o" aria-hidden="true"></i> Profile</a>
                                         <a href="<?php echo base_url('logout'); ?>" class="dropdown-item"><i class="fa fa-sign-out" aria-hidden="true"></i> Logout</a>
                                     </div>
                                 </li>

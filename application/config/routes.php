@@ -64,3 +64,7 @@ $route['login'] = 'account/login';
 $route['logout'] = 'account/logout';
 $route['forgot_pass1'] = 'account/forgot_pass';
 $route['reset_pass/(:any)/(:any)'] = 'account/reset_pass/$1/$2';
+
+//user
+$route['dashboard'] = 'user/dashboard';
+$route['profile/(:any)'] = 'web/profile/$1';
