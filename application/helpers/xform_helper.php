@@ -40,8 +40,10 @@ function xform_check($label, $name, $type = 'checkbox', $id = '', $value = '', $
     $checked = $checked ? 'checked' : '';
     $required = $required ? 'required' : '';
     $inline_class = $inline ? 'form-check-inline' : '';
-    $elem = '<div class="form-check '.$inline_class.'">
-                <input class="form-check-input" type="'.$type.'" name="'.$name.'" id="'.$id.'" value="'.$value.'" '.$checked.' '.$required.'>
+    $class = $extra['class'] ?? '';
+    $gclass = $extra['gclass'] ?? '';
+    $elem = '<div class="form-check '.$inline_class.' '.$gclass.'">
+                <input class="form-check-input chk_rad_15 '.$class.'" type="'.$type.'" name="'.$name.'" id="'.$id.'" value="'.$value.'" '.$checked.' '.$required.'>
                 <label class="form-check-label text-bold" for="'.$id.'">'.$label.'</label>
             </div>';
     if ($return) return $elem;
@@ -181,13 +183,15 @@ function modal_input_button($target, $url, $selectfield, $text = '', $icon = 'pl
 function _form_field($name, $type, $value, $required, $input_extra, $input_group) {
     //do we have an input group?
     if (is_array($input_group) && !empty($input_group)) { ?>
-        <div class="input-group mb-3">
+        <div class="input-group">
             <?php
             //prepend
             $prepend = input_key_isset($input_group, 'prepend', '');
             if (strlen($prepend)) { ?>
                 <div class="input-group-prepend">
-                    <?php echo $prepend; ?>
+                    <span class="input-group-text <?php echo $input_group['pp_class'] ?? ''; ?>">
+                        <?php echo $prepend; ?>
+                    </span>
                 </div>
                 <?php 
             } 
@@ -200,7 +204,9 @@ function _form_field($name, $type, $value, $required, $input_extra, $input_group
             $append = input_key_isset($input_group, 'append', '');
             if (strlen($append)) { ?>
                 <div class="input-group-append">
-                    <?php echo $append; ?>
+                    <span class="input-group-text <?php echo $input_group['pp_class'] ?? ''; ?>">
+                        <?php echo $append; ?>
+                    </span>
                 </div>
                 <?php 
             } ?>
@@ -294,7 +300,7 @@ function xform_btn($html = 'Save', $form_id = '', $extra = ['class' => 'btn btn-
     <?php
 }
 
-function xform_submit($html = 'Save', $form_id = '', $extra = ['class' => 'btn btn-theme'], $fg_extra = ['class' => 'form-group']) { ?>
+function xform_submit($html = 'Save', $form_id = '', $extra = ['class' => 'btn btn-theme'], $fg_extra = ['class' => 'form-group mt-2']) { ?>
     <div <?php echo set_extra_attrs($fg_extra); ?>>
         <?php xform_btn('<span>'.$html.'</span>', $form_id, $extra); ?>
     </div>

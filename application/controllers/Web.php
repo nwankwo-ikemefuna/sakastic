@@ -4,7 +4,7 @@ defined('BASEPATH') or die('Direct access not allowed');
 class Web extends Core_controller {
     public function __construct() {
         parent::__construct();
-        $this->page_scripts = ['posts'];
+        $this->page_scripts = ['web/js/posts'];
     }
 
 

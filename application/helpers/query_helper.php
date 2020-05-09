@@ -67,8 +67,18 @@ function price_select($code_col, $price_col, $alias = 'amount', $precision = 0) 
 	return "CONCAT('&#', {$code_col}, ';', CONVERT(FORMAT({$price_col}, {$precision}) using utf8)) AS {$alias}";
 }
 
-function file_select($path, $file_col, $alias = 'file', $default = null) {
-	return "CONCAT('{$path}', '/', {$file_col}) AS {$alias}";
+function file_select($path, $file_col, $default = '') {
+	return "IF({$file_col} IS NULL, {$default}, CONCAT('{$path}', '/', {$file_col}))";
+}
+
+function avatar_select_default($sex_col) {
+	$select = "
+		CASE {$sex_col}
+			WHEN '".SEX_MALE."' THEN '".AVATAR_MALE."'
+			WHEN '".SEX_FEMALE."' THEN '".AVATAR_FEMALE."'
+		    ELSE '".AVATAR_GENERIC."'
+		END";
+	return $select;
 }
 
 function find_in_set_mult($params, $field) {

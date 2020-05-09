@@ -6,6 +6,18 @@ class Common_model extends Core_Model {
         parent::__construct();
     }
 
+
+    public function country_sql($select = '*', $where = []) {
+        $select = strlen($select) ? $select : 'c.id, c.name, c.nationality, c.order';
+        return sql_data(T_COUNTRIES.' c', [], $select, $where);
+    }
+
+
+    public function get_countries($select = '*', $where = [], $trashed = 0) {
+        $sql = $this->country_sql($select, $where);
+        return $this->get_rows($sql['table'], $trashed, $sql['joins'], $sql['select'], $sql['where']);
+    }
+
     
     public function next_order($table) {
         //ensure order column exists

@@ -47,10 +47,10 @@ function data_show_list($label, $data) { ?>
 
 function data_show_grid($label, $data) { ?>
     <div class="row m-b-5">
-        <div class="<?php echo grid_col(12, 6, 4, 3); ?>">
+        <div class="<?php echo grid_col(12, 5); ?>">
             <div class="view_label"><?php echo $label; ?>:</div>
         </div>
-        <div class="<?php echo grid_col(12, 6, 8, 9); ?>">
+        <div class="<?php echo grid_col(12, 7); ?>">
             <div class="view_data"><?php echo $data; ?></div>
         </div>
     </div>

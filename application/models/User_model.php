@@ -10,12 +10,20 @@ class User_model extends Core_Model {
 	public function sql($to_join = [], $select = "*", $where = []) {
 		$arr = sql_select_arr($select);
 		$select =  $select != '*' ? $arr['main'] : "u.*";
+		$select .= join_select($arr, 'country_name', "c.name");
+		$select .= join_select($arr, 'nationality', "c.nationality");
 		$select .= join_select($arr, 'user_posts', "up.user_posts");
 		$select .= join_select($arr, 'user_comments', "uc.user_comments");
 		$select .= join_select($arr, 'user_total_content', "SUM(IFNULL(up.user_posts, 0) + IFNULL(uc.user_comments, 0))");
 		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
-		$select .= join_select($arr, 'avatar', "'".AVATAR_GENERIC."'");
+		$select .= join_select($arr, 'avatar', file_select('uploads/images/users', 'u.photo', avatar_select_default('u.sex')));
 		$joins = [];
+		//country
+		if (in_array('c', $to_join) || in_array('all', $to_join)) {
+			$joins = array_merge($joins, 
+				[T_COUNTRIES.' c' => ['c.id = u.country']]
+			);
+		}
 		//posts
 		if (in_array('p', $to_join) || in_array('all', $to_join)) {
 			$joins = array_merge($joins, 
@@ -56,16 +64,17 @@ class User_model extends Core_Model {
 	}
 
 
-	private function data($usergroup) {
+	private function data() {
 		$data = [
-            'usergroup' => xpost('usergroup'),
             'first_name' => ucwords(xpost('first_name')),
             'last_name' => ucwords(xpost('last_name')),
-            'email' => xpost('email'),
-            'username' => xpost('username'),
-            'phone' => xpost('phone'),
+            'country' => xpost('country'),
             'sex' => xpost('sex'),
-            'password' => password_hash(xpost('password'), PASSWORD_DEFAULT)
+            'quote' => xpost('quote'),
+            'social_facebook' => xpost('social_facebook'),
+            'social_twitter' => xpost('social_twitter'),
+            'social_instagram' => xpost('social_instagram'),
+            'social_linkedin' => xpost('social_linkedin')
         ];
 		return $data;
 	}
@@ -78,9 +87,9 @@ class User_model extends Core_Model {
 	}
 
 
-	public function edit() { 
+	public function edit($id) { 
 		$data = $this->data();
-		$this->update(T_USERS, $data, ['id' => xpost('id')]);
+		$this->update(T_USERS, $data, ['id' => $id]);
 	}
 
 	

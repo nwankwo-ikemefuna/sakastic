@@ -7,7 +7,7 @@ class Posts extends Core_controller {
         //controller library
         $params = ['type' => 'post'];
         $this->load->library('controllers/post_lib', $params);
-        $this->page_scripts = ['posts'];
+        $this->page_scripts = ['web/js/posts'];
     }
 
 

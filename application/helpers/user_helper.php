@@ -10,6 +10,8 @@ function user_group($groups) {
 
 function user_avatar() {
 	$ci =& get_instance();
+	if (strlen($ci->session->user_photo)) 
+		return base_url($ci->session->user_photo);
 	if ($ci->session->user_sex == SEX_MALE) {
 		$default = AVATAR_MALE;
 	} elseif ($ci->session->user_sex == SEX_FEMALE) {
@@ -19,3 +21,4 @@ function user_avatar() {
 	}
 	return base_url($default);
 }
+

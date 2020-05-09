@@ -49,7 +49,13 @@ function upload_file($file_input, $conf) {
         if ($resize) {
             $width = $conf['resize_width'] ?? 500;
             $height = $conf['resize_height'] ?? 500;
-            resize_image($conf['path'], $file_name, $width, $height);
+            $thumb = resize_image($conf['path'], $file_name, $width, $height);
+            //are we deleting original
+            if (isset($conf['delete_origin']) && $conf['delete_origin']) {
+                //delete original and return resized version
+                unlink_file($conf['path'], $file_name, false);
+                return ['status' => true, 'file_name' => $thumb];
+            }
         }
         return ['status' => true, 'file_name' => $file_name];
     }
@@ -141,25 +147,29 @@ function resize_image($path, $file_name, $width, $height) {
     }
 }
 
-function unlink_file(string $path, $file = '') {
+function unlink_file(string $path, $file = '', $delete_thumb = true) {
     //if file is not supplied, path is a complete file path
     $file_path = strlen($file) ? $path.'/'.$file : $path;
     if (is_file($file_path) && file_exists($file_path)) {
-        //delete thumbnail (if any)
-        delete_thumbnail($file_path);
+        //delete thumbnail (if any) and allowed
+        if ($delete_thumb) {
+            delete_thumbnail($file_path);
+        }
         //delete file
         return unlink($file_path);
     }
     return false;
 }
 
-function unlink_files(string $path, array $files) {
+function unlink_files(string $path, array $files, $delete_thumb = true) {
     if (is_array($files) && !empty($files)) {
         foreach ($files as $file) {
             $file_path = $path.'/'.$file;
             if ( ! is_file($file_path) || ! file_exists($file_path)) continue;
-            //delete thumbnail (if any)
-            delete_thumbnail($file_path);
+            //delete thumbnail (if any) and allowed
+            if ($delete_thumb) {
+                delete_thumbnail($file_path);
+            }
             //delete file
             unlink($file_path);
         }

@@ -138,6 +138,16 @@ function image_exists(url){
     return http.status != 404;
 }
 
+function preview_image(input, preview = '.img_preview') {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $(preview).attr('src', e.target.result);
+        }
+        reader.readAsDataURL(input.files[0]); // convert to base64 string
+    }
+}
+
 function find_element(selector, parent = 'html') {
     var pos = $(selector).position().top;
     $(parent).scrollTop(pos);

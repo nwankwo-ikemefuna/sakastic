@@ -9,6 +9,7 @@ class User extends Core_controller {
 		$this->is_admin = ($this->usergroup == ADMIN);
 
 		$this->user_details = $this->user_model->get_details($this->session->user_id, 'id', ['all']);
+		// last_sql(); die;
 		$this->is_me = true;
 	}
 
@@ -24,9 +25,10 @@ class User extends Core_controller {
 	}
 
 
-	protected function dash_header($page_title) {
+	protected function dash_header($page_title, $column = '') {
 		$this->session->ajax_requested_page = get_requested_page();
 		$data['page_title'] = $page_title;
+		$data['column'] = $column;
 		return $this->load->view('user/layout/dash_header', $data);
 	}
 	
@@ -38,7 +40,7 @@ class User extends Core_controller {
 
 
 	public function dashboard() { 
-		$this->page_scripts = ['posts'];
+		$this->page_scripts = ['web/js/posts', 'user/js/user'];
 		$this->show_sidebar = false;
 		$data['row'] = $this->user_details;
 		$data['is_me'] = $this->is_me;
@@ -49,8 +51,6 @@ class User extends Core_controller {
 
 
 	public function dash() { 
-		//buttons
-		$row = $this->user_model->get_details($this->session->user_username, 'username', ['all']);
 		$data['row'] = $this->user_details;
 		$data['is_me'] = $this->is_me;
 		$this->dash_header('');
@@ -61,40 +61,34 @@ class User extends Core_controller {
 
 	public function profile() { 
 		$data['row'] = $this->user_details;
-		$data['is_me'] = $this->is_me;
-		$this->dash_header('My Profile');
+		$this->dash_header('My Profile', '8?2');
 		$this->load->view('user/profile_ajax', $data);
 		$this->dash_footer();
 	}
 
 
-	public function reset_pass() { 
-		//buttons
-		$this->butts = ['save' => ['form' => 'reset_pass_form']];
-		$this->dash_header('Reset Password');
-		$this->load->view('user/reset_pass_ajax');
+	public function edit() { 
+		$data['row'] = $this->user_details;
+		$data['countries'] = $this->common_model->get_countries('id, name');
+		$this->dash_header('Edit Profile', '8?2');
+		$this->load->view('user/edit_ajax', $data);
 		$this->dash_footer();
 	}
 
 
-	public function reset_pass_ajax() { 
-        $this->form_validation->set_rules('curr_password', 'Password', 'trim|required');
-        $this->form_validation->set_rules('password', 'Password', 'trim|required|min_length[6]|callback_check_pass_strength');
-        $this->form_validation->set_rules('c_password', 'Confirm Password', 'trim|required|matches[password]', ['matches'   => 'Passwords do not match']);
-        if ($this->form_validation->run() === FALSE)
-            json_response(validation_errors(), false);
-        //is current password correct?
-        if ( ! password_verify(xpost('curr_password'), $this->session->user_password))
-        	json_response('Current password not correct', false);
-       	//is current password same as new password
-       	if (xpost('curr_password') == xpost('password'))
-        	json_response('New password cannot be same as current password', false);
-        $data = [
-        	'password' => password_hash(xpost('password'), PASSWORD_DEFAULT), 
-        	'password_set' => 1
-        ];
-        $this->common_model->update(T_USERS, $data, ['id' => $this->session->user_id]);
-        json_response(['redirect' => 'user']);
-    }
+	public function change_avatar() { 
+		$data['avatar'] = $this->user_details->avatar;
+		$this->dash_header('', '6?3');
+		$this->load->view('user/change_avatar_ajax', $data);
+		$this->dash_footer();
+	}
+
+
+	public function reset_account() { 
+		$data['row'] = $this->user_details;
+		$this->dash_header('Account Settings', '6?3');
+		$this->load->view('user/reset_account_ajax', $data);
+		$this->dash_footer();
+	}
 
 }

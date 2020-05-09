@@ -1,22 +1,31 @@
-<div class="row">
+<div class="row m-t-50">
 	<div class="col-md-6 offset-md-3">
 	    <div class="card profile-card">
 	        <div class="background-block">
 	            <img src="<?php echo base_url('assets/common/img/bg/profile-bg.jpg'); ?>" alt="profile-sample1" class="background"/>
 	        </div>
 	        <div class="profile-thumb-block">
-	            <img src="<?php echo base_url($row->avatar); ?>" alt="profile-image" class="profile"/>
+	        	<img src="<?php echo base_url($row->avatar); ?>" alt="<?php echo $row->username; ?> avatar" class="profile" />
 	        </div>
 	        <div class="card-content">
-		        <h2><?php echo $row->username; ?></h2>
+	        	<h2><?php echo $row->username; ?></h2>
+		        <small class="text-muted"><?php echo $row->nationality; ?></small>
 		        <div class="icon-block">
-		        	<a href="#"><i class="fa fa-facebook"></i></a>
-		        	<a href="#"> <i class="fa fa-twitter"></i></a>
-		        	<a href="#"> <i class="fa fa-google-plus"></i></a>
+		        	<a href="<?php echo strlen($row->social_facebook) ? 'https://facebook.com/'.$row->social_facebook : '#!'; ?>" title="Connect on Facebook" target="_blank"> <i class="fa fa-facebook bg-facebook"></i></a>
+		        	<a href="<?php echo strlen($row->social_twitter) ? 'https://twitter.com/'.$row->social_twitter : '#!'; ?>" title="Connect on Twitter" target="_blank"> <i class="fa fa-twitter bg-twitter"></i></a>
+		        	<a href="<?php echo strlen($row->social_instagram) ? 'https://instagram.com/'.$row->social_instagram : '#!'; ?>" title="Connect on Instagram" target="_blank"> <i class="fa fa-instagram bg-instagram"></i></a>
+		        	<a href="<?php echo strlen($row->social_linkedin) ? 'https://linkedin.com/in/'.$row->social_linkedin : '#!'; ?>" title="Connect on LinkedIn"target="_blank"> <i class="fa fa-linkedin bg-linkedin"></i></a>
 		        </div>
 		    </div>
 	    </div>
 	</div>
+</div>
+<div class="mt-3 text-center text-muted" style="font-style: italic;">
+	<h6>
+		<i class="fa fa-quote-left"></i>
+		<?php echo $row->quote; ?>
+		<i class="fa fa-quote-right"></i> 
+	</h6>
 </div>
 <div class="row mt-5">
     <?php _info_card('Posts', $row->user_posts, 'book'); ?>

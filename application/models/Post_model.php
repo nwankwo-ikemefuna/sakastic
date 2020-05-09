@@ -26,7 +26,7 @@ class Post_model extends Core_Model {
 		$select .= join_select($arr, 'user_comments', "IFNULL(uc.user_comments, 0)");
 		$select .= join_select($arr, 'voted', "IF(FIND_IN_SET('{$this->session->user_id}', `{$alias}`.`voters`), 1, 0)");
 		$select .= join_select($arr, 'is_user_post', "IF({$alias}.user_id = '{$this->session->user_id}', 1, 0)");
-		$select .= join_select($arr, 'avatar', "'".AVATAR_GENERIC."'");
+		$select .= join_select($arr, 'avatar', file_select('uploads/images/users', 'u.photo', avatar_select_default('u.sex')));
 		$joins = [];
 		if ($type == 'post') {
 			//comments

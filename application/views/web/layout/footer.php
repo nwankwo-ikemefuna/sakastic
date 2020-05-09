@@ -50,10 +50,8 @@ modal_footer(false);
 <script src="<?php echo base_url(); ?>assets/common/js/ajax.js"></script>
 
 <?php
-//auth
-// load_scripts(['auth'], 'assets/web/js'); 
-//custom page-specific scripts
-load_scripts($this->page_scripts, 'assets/web/js'); 
+//custom scripts
+load_scripts($this->page_scripts, 'assets'); 
 ?>
 
 <script>

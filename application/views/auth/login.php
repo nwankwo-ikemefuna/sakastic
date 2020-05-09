@@ -4,6 +4,9 @@
 <?php } ?>
 
 <h4 class="bar_title">Login</h4>
+<?php echo flash_message('success_msg'); ?>
+<?php echo flash_message('error_msg', 'danger'); ?>
+
 <?php 
 $redirect_url = $vtype == 'regular' ? base_url() : '_self';
 $attrs = [

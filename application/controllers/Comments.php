@@ -7,7 +7,6 @@ class Comments extends Core_controller {
         //controller library
         $params = ['type' => 'comment'];
         $this->load->library('controllers/post_lib', $params);
-        $this->page_scripts = ['posts'];
     }
 
 
