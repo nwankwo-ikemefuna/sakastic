@@ -103,12 +103,272 @@ jQuery(document).ready(function ($) {
 
 });
 
-function get_select_options(url, selectfield, current_val) {
+function post_data_ajax(url, data, is_form_data = false, success_callback, error_callback = null, status_modal = false, loading_msg = 'Processing... Please wait') { 
+    var promise = new Promise(function(resolve, reject) {
+        var ajax_setup = {
+            url: url,
+            type: 'POST',
+            dataType: "json",
+            data: secure_req_data(data, is_form_data),
+            beforeSend: function() { ajax_loading_show(status_modal, loading_msg) },
+            complete: function() { ajax_loading_hide() }
+        };
+        //if form data, add processdata and contenttype to setup
+        ajax_setup = is_form_data ? {...ajax_setup, ...{processData: false, contentType: false}} : ajax_setup;
+        $.ajax(ajax_setup)
+        .done(function (jres) {
+            if (typeof success_callback === 'function') {
+                success_callback(jres);
+            }
+            resolve_promise(resolve, reject, jres);
+        })
+        .fail(function (error) {
+            if (typeof error_callback === 'function') {
+                error_callback();
+            }
+            reject_promise(reject, error);
+        });
+    });
+    return promise;
+}
+
+function fetch_data_ajax(url, data, type = 'POST', success_callback, error_callback = null, status_modal = false, loading_msg = 'Processing... Please wait') { 
+    var promise = new Promise(function(resolve, reject) {
+        $.ajax({
+            url: url,
+            type: type,
+            dataType: "json",
+            data: secure_req_data(data, false),
+            beforeSend: function() { ajax_loading_show(status_modal, loading_msg) },
+            complete: function() { ajax_loading_hide() }
+        })
+        .done(function (jres) {
+            if (typeof success_callback === 'function') {
+                success_callback(jres);
+            }
+            resolve_promise(resolve, reject, jres);
+        })
+        .fail(function (error) {
+            if (typeof error_callback === 'function') {
+                error_callback(error);
+            }
+            reject_promise(reject, error);
+        });
+    });
+    return promise;
+}
+
+function regenerate_csrf_token() { 
+    //make non-promised based request to regenerate and get new csrf on fail so that subsequent non-chained requests can run unhindered
     $.ajax({
-        url: base_url+url, 
+        url: base_url+'api/common/regenerate_csrf',
         type: 'GET',
-        dataType: 'json',
-    }).done( jres => {
+        dataType: "json"
+    })
+    .done(function (jres) {
+        var curr_csrf_hash = $('.'+csrf_token_name).val();
+        var csrf_hash = jres[csrf_token_name] || '';
+        // console.log('New token:', csrf_hash);
+        if ( ! csrf_hash.length) {
+            //log for debugging
+            console.error('CSRF: CSRF token not set!');
+            return false;
+        }
+        //update
+        $('.'+csrf_token_name).val(csrf_hash);
+        //ensure the new token has been updated
+        return ($('.'+csrf_token_name).val() != curr_csrf_hash && $('.'+csrf_token_name).val() == csrf_hash);
+    });
+}
+
+function ajax_post_form(form_id, data, url, fm_type, redirect_url = '', success_msg = 'Successful', notice_elem = 'status_msg', status_modal = false, loading_msg = 'Processing... Please wait', clear = false, ajax_container = 'ajax_page_container', ajax_delay = 3, ajax_callback = null, ajax_loading = 1, ajax_loading_text = 'Loading') {
+    var promise = new Promise(function(resolve, reject) {
+        $.ajax({
+            url: url, 
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            contentType: false,
+            cache: false,
+            processData: false,
+            beforeSend: function() {
+                $('.'+notice_elem).empty();
+                if (status_modal) {
+                    ajax_loading_show(status_modal, loading_msg);
+                } else {
+                    $('.ajax_spinner').removeClass('hide').addClass('fa-spin');
+                }
+            },
+            complete: function() {
+                if (status_modal) {
+                    ajax_loading_hide();
+                } else {
+                    $('.ajax_spinner').addClass('hide').removeClass('fa-spin');
+                }
+            }
+        })
+        .done(function(jres) {
+            if (jres.status) {
+                if (clear) {
+                    $('#'+form_id)[0].reset();
+                }
+                if (fm_type == 'js_alert') {
+                    alert(success_msg);
+                    // alert(jQuery(success_msg).text());
+                } else {
+                    status_box(notice_elem, success_msg, 'success');
+                }
+                setTimeout(function() { 
+                    switch (redirect_url) {
+                        case '_void':
+                            //no redirect
+                            //do nothing
+                            break;
+                        case '_self':
+                            //self redirect
+                            location.reload();
+                            break;
+                        case '_dynamic':
+                            //dynamic redirect
+                            $(location).attr('href', base_url+jres.body.msg.redirect);
+                            break;
+                        case '_ajax':
+                            load_page_ajax(redirect_url, ajax_callback, ajax_delay, ajax_container, ajax_loading, ajax_loading_text);
+                            break;
+                        case '_ajax_dynamic':
+                            load_page_ajax(jres.body.msg.redirect, ajax_callback, ajax_delay, ajax_container, ajax_loading, ajax_loading_text);
+                            break;
+                        default:
+                            //as provided
+                            $(location).attr('href', redirect_url);
+                            break;
+                    }
+                }, 3000);  
+            } else {
+                if (fm_type == 'js_alert') {
+                    alert($(jres.error).text());
+                } else {
+                    status_box(notice_elem, jres.error, 'danger');
+                }
+            }
+            resolve_promise(resolve, reject, jres);
+        })
+        .fail(function (error) {
+            reject_promise(reject, error);
+        });
+    });
+    return promise;
+}
+
+function ajax_post_form_refresh(form_id, data, url, modal_id = '', fm_type = 'modal_dt', success_msg = 'Successful!', refresh = true, notice_elem = 'status_msg', status_modal = false, loading_msg = 'Processing... Please wait', clear = false) {
+    var promise = new Promise(function(resolve, reject) {
+        $.ajax({
+            url: url, 
+            type: 'POST',
+            data: secure_req_data(data, true),
+            dataType: 'json',
+            contentType: false,
+            cache: false,
+            processData: false,
+            beforeSend: function() {
+                $('.'+notice_elem).empty();
+                if (status_modal) {
+                    ajax_loading_show(status_modal, loading_msg);
+                } else {
+                    $('.ajax_spinner').removeClass('hide').addClass('fa-spin');
+                }
+            },
+            complete: function() {
+                if (status_modal) {
+                    ajax_loading_hide();
+                } else {
+                    $('.ajax_spinner').addClass('hide').removeClass('fa-spin');
+                }
+            }
+        })
+        .done(function(jres) {
+            if (jres.status) {
+                if (clear) {
+                    $('#'+form_id)[0].reset();
+                }
+                if (refresh) {
+                    if (fm_type == 'modal_sp') {
+                        //refresh selectfield
+                        get_select_options(selectfield_url, selectfield_name);
+                    } else {
+                        $('.ajax_dt_table').DataTable().ajax.reload();
+                    }
+                }
+                status_box(notice_elem, success_msg, 'success');
+                if (modal_id.length) {
+                    setTimeout(function() { 
+                        $('#'+modal_id).modal('hide');
+                    }, 3000);  
+                }
+            } else {
+                status_box(notice_elem, jres.error, 'danger');
+            }
+            resolve_promise(resolve, reject, jres);
+        })
+        .fail(function (error) {
+            reject_promise(reject, error);
+        });
+    });
+    return promise;
+}
+
+function ajax_post_btn_data(url, data, btn_id, modal_id = '', success_msg = 'Successful', reload_table = true, status_modal = false, loading_msg = 'Processing... Please wait') {
+    var promise = new Promise(function(resolve, reject) {
+        $(document).off('click', '#'+btn_id); //unbind event to prevent multiple firing
+        $(document).on('click', '#'+btn_id, function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: base_url+url, 
+                type: 'POST',
+                data: secure_req_data(data, false),
+                dataType: 'json',
+                beforeSend: function() {
+                    $('.confirm_status').empty();
+                    if (status_modal) {
+                        ajax_loading_show(status_modal, loading_msg);
+                    } else {
+                        $('.ajax_spinner').removeClass('hide').addClass('fa-spin');
+                    }
+                },
+                complete: function() {
+                    if (status_modal) {
+                        ajax_loading_hide();
+                    } else {
+                        $('.ajax_spinner').addClass('hide').removeClass('fa-spin');
+                    }
+                }
+            })
+            .done(function(jres) {
+                if (jres.status) {
+                    if (modal_id.length) {
+                        status_box('confirm_status', success_msg, 'success');
+                        setTimeout(function() { 
+                            $('#'+modal_id).modal('hide');
+                        }, 3000);
+                    }
+                    if (reload_table) {
+                        $('.ajax_dt_table').DataTable().ajax.reload();
+                    }
+                } else {
+                    status_box('confirm_status', jres.error, 'danger');
+                }
+                resolve_promise(resolve, reject, jres);
+            })
+            .fail(function (error) {
+                reject_promise(reject, error);
+            });
+        });
+    });
+    return promise;
+}
+
+function get_select_options(url, selectfield, current_val) {
+    var success_callback = function(jres) {
         $('[name="'+selectfield+'"]').empty(); //empty selectfield
         var options = '<option value="">Select</option>';
         if (jres.status) { 
@@ -127,214 +387,29 @@ function get_select_options(url, selectfield, current_val) {
         //append the options to the select field
         $('[name="'+selectfield+'"]').append(options);
         $('[name="'+selectfield+'"]').selectpicker('refresh');
-    });
-}
-
-function ajax_post_form(form_id, form_data, url, fm_type, redirect_url = '', success_msg = 'Successful', notice_elem = 'status_msg', status_modal = false, loading_msg = 'Processing... Please wait', clear = false, ajax_container = 'ajax_page_container', ajax_delay = 3, ajax_callback = null, ajax_loading = 1, ajax_loading_text = 'Loading') {
-    $.ajax({
-        url: url, 
-        type: 'POST',
-        data: form_data,
-        dataType: 'json',
-        contentType: false,
-        cache: false,
-        processData: false,
-        beforeSend: function() {
-            $('.'+notice_elem).empty();
-            if (status_modal) {
-                ajax_loading_show(status_modal, loading_msg);
-            } else {
-                $('.ajax_spinner').removeClass('hide').addClass('fa-spin');
-            }
-        },
-        complete: function() {
-            if (status_modal) {
-                ajax_loading_hide();
-            } else {
-                $('.ajax_spinner').addClass('hide').removeClass('fa-spin');
-            }
-        }
-    }).done(function(jres) {
-        if (jres.status) {
-            if (clear) {
-                $('#'+form_id)[0].reset();
-            }
-            if (fm_type == 'js_alert') {
-                alert(success_msg);
-                // alert(jQuery(success_msg).text());
-            } else {
-                status_box(notice_elem, success_msg, 'success');
-            }
-            setTimeout(function() { 
-                switch (redirect_url) {
-                    case '_void':
-                        //no redirect
-                        //do nothing
-                        break;
-                    case '_self':
-                        //self redirect
-                        location.reload();
-                        break;
-                    case '_dynamic':
-                        //dynamic redirect
-                        $(location).attr('href', base_url+jres.body.msg.redirect);
-                        break;
-                    case '_ajax':
-                        load_page_ajax(redirect_url, ajax_callback, ajax_delay, ajax_container, ajax_loading, ajax_loading_text);
-                        break;
-                    case '_ajax_dynamic':
-                        load_page_ajax(jres.body.msg.redirect, ajax_callback, ajax_delay, ajax_container, ajax_loading, ajax_loading_text);
-                        break;
-                    default:
-                        //as provided
-                        $(location).attr('href', redirect_url);
-                        break;
-                }
-            }, 3000);  
-        } else {
-            if (fm_type == 'js_alert') {
-                alert(jQuery(jres.error).text());
-            } else {
-                status_box(notice_elem, jres.error, 'danger');
-            }
-        }
-    });
-}
-
-function ajax_post_form_refresh(form_id, form_data, url, modal_id = '', fm_type = 'modal_dt', success_msg = 'Successful!', refresh = true, notice_elem = 'status_msg', status_modal = false, loading_msg = 'Processing... Please wait', clear = false) {
-    $.ajax({
-        url: url, 
-        type: 'POST',
-        data: form_data,
-        dataType: 'json',
-        contentType: false,
-        cache: false,
-        processData: false,
-        beforeSend: function() {
-            $('.'+notice_elem).empty();
-            if (status_modal) {
-                ajax_loading_show(status_modal, loading_msg);
-            } else {
-                $('.ajax_spinner').removeClass('hide').addClass('fa-spin');
-            }
-        },
-        complete: function() {
-            if (status_modal) {
-                ajax_loading_hide();
-            } else {
-                $('.ajax_spinner').addClass('hide').removeClass('fa-spin');
-            }
-        }
-    }).done(function(jres) {
-        if (jres.status) {
-            if (clear) {
-                $('#'+form_id)[0].reset();
-            }
-            if (refresh) {
-                if (fm_type == 'modal_sp') {
-                    //refresh selectfield
-                    get_select_options(selectfield_url, selectfield_name);
-                } else {
-                    $('.ajax_dt_table').DataTable().ajax.reload();
-                }
-            }
-            status_box(notice_elem, success_msg, 'success');
-            if (modal_id.length) {
-                setTimeout(function() { 
-                    $('#'+modal_id).modal('hide');
-                }, 3000);  
-            }
-        } else {
-            status_box(notice_elem, jres.error, 'danger');
-        }
-    });
-}
-
-function ajax_post_btn_data(url, post_data, btn_id, modal_id = '', success_msg = 'Successful', reload_table = true, status_modal = false, loading_msg = 'Processing... Please wait') {
-    // post_data = extra.length ? {...post_data, ...extra} : post_data;
-    $(document).off('click', '#'+btn_id); //unbind event to prevent multiple firing
-    $(document).on('click', '#'+btn_id, function(e) {
-        e.preventDefault();
-        $.ajax({
-            url: base_url+url, 
-            type: 'POST',
-            data: post_data,
-            dataType: 'json',
-            beforeSend: function() {
-                $('.confirm_status').empty();
-                if (status_modal) {
-                    ajax_loading_show(status_modal, loading_msg);
-                } else {
-                    $('.ajax_spinner').removeClass('hide').addClass('fa-spin');
-                }
-            },
-            complete: function() {
-                if (status_modal) {
-                    ajax_loading_hide();
-                } else {
-                    $('.ajax_spinner').addClass('hide').removeClass('fa-spin');
-                }
-            }
-        }).done(function(jres) {
-            if (jres.status) {
-                if (modal_id.length) {
-                    status_box('confirm_status', success_msg, 'success');
-                    setTimeout(function() { 
-                        $('#'+modal_id).modal('hide');
-                    }, 3000);
-                }
-                if (reload_table) {
-                    $('.ajax_dt_table').DataTable().ajax.reload();
-                }
-            } else {
-                status_box('confirm_status', jres.error, 'danger');
-            }
-        });
-    });
-}
-
-function post_data_ajax(url, data, is_form_data = false, success_callback, error_callback = null, status_modal = false, loading_msg = 'Processing... Please wait') { 
-    var ajax_setup = {
-        url: url,
-        type: 'POST',
-        dataType: "json",
-        data: data,
-        beforeSend: function() { ajax_loading_show(status_modal, loading_msg) },
-        complete: function() { ajax_loading_hide() }
     };
-    //if form data, add processdata and contenttype to setup
-    ajax_setup = is_form_data ? {...ajax_setup, ...{processData: false, contentType: false}} : ajax_setup;
-    $.ajax(ajax_setup)
-    .done(function (jres) {
-        if (typeof success_callback === 'function') {
-            success_callback(jres);
-        }
-    })
-    .fail(function () {
-        if (typeof error_callback === 'function') {
-            error_callback();
-        }
-    });
+    fetch_data_ajax(base_url+url, {}, 'GET', success_callback);
 }
 
-function fetch_data_ajax(url, data, type = 'POST', success_callback, error_callback = null, status_modal = false, loading_msg = 'Processing... Please wait') { 
-    $.ajax({
-        url: url,
-        type: type,
-        dataType: "json",
-        data: data,
-        beforeSend: function() { ajax_loading_show(status_modal, loading_msg) },
-        complete: function() { ajax_loading_hide() }
-    })
-    .done(function (jres) {
-        if (typeof success_callback === 'function') {
-            success_callback(jres);
-        }
-    })
-    .fail(function () {
-        if (typeof error_callback === 'function') {
-            error_callback();
-        }
+function paginate_data(url, elem, row_render, paginate_elem = 'pagination', page_num = 0, data = {}, final_callback = null, error_callback = null, status_modal = false, loading_msg = 'Processing... Please wait', delay = 0) {
+    var success_callback = function(jres) {
+        //create pagination links
+        $('#'+paginate_elem).html(jres.body.msg.pagination);
+        $('#'+elem).empty();
+        if (jres.status) {
+            var accum = '';
+            $.each(jres.body.msg.records, (i, row) => {
+                if ( typeof row_render == "function" )
+                    accum += row_render(row);
+            });
+            $('#'+elem).html(accum);
+            if ( typeof final_callback == "function" ) {
+                final_callback(jres);
+            }
+        } 
+    };
+    waitfor(delay).then(() => {
+        post_data_ajax(base_url+url+'/'+page_num, data, false, success_callback,  error_callback, status_modal, loading_msg);
     });
 }
 
@@ -346,33 +421,6 @@ function ci_paginate(url, elem, row_render, pagination = 'pagination', data = {}
         //jump to beginning of item list
         var top = $('#'+scroll_to).position().top;
         $('html').scrollTop(top);
-    });
-}
-
-function paginate_data(url, elem, row_render, paginate_elem = 'pagination', page_num = 0, data = {}, succ_callbk = null, err_callbk = null, status_modal = false, loading_msg = 'Processing... Please wait') {
-    $.ajax({
-        url: base_url+url+'/'+page_num,
-        type: 'POST',
-        dataType: 'json',
-        data: data,
-        beforeSend: function() { ajax_loading_show(status_modal, loading_msg) },
-        complete: function() { ajax_loading_hide() }
-    }).done(function(jres) {
-        $('#'+paginate_elem).html(jres.body.msg.pagination);
-        $('#'+elem).empty();
-        if (jres.status) {
-            var accum = '';
-            $.each(jres.body.msg.records, (i, row) => {
-                if ( typeof row_render == "function" )
-                    accum += row_render(row);
-            });
-            $('#'+elem).html(accum);
-            if ( typeof succ_callbk == "function" ) 
-                succ_callbk(jres);
-        } 
-    }).fail(function(jres) {
-        if ( typeof err_callbk == "function" ) 
-            err_callbk(jres);
     });
 }
 

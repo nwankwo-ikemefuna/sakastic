@@ -9,6 +9,9 @@
     </div><!-- /.container-->
 </div><!-- /.page_body -->
 
+
+<?php csrf_input(); ?>
+
 <!-- Footer -->
 <footer class="py-3 bg-dark">
     <div class="container">
@@ -61,7 +64,8 @@ load_scripts($this->page_scripts, 'assets');
         current_page = "<?php echo $current_page; ?>",
         is_loggedin = <?php echo json_encode((Bool)$this->session->user_loggedin); ?>,
         username = "<?php echo $this->session->user_username; ?>",
-        trashed = 0;
+        trashed = 0,
+        csrf_token_name = "<?php echo $this->security->get_csrf_token_name(); ?>";
 
     //post button navigation
     $(document).ready(function(){
@@ -70,7 +74,7 @@ load_scripts($this->page_scripts, 'assets');
             if (current_page == 'home') {
                 find_element('#post_section');
             } else {
-                location.href = base_url;
+                location.href = base_url+'#post_section';
             }
         });
     });

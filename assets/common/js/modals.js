@@ -181,57 +181,6 @@ jQuery(document).ready(function ($) {
         return record_idx;
     }
 
-
-    //email user
-    $(document).on( "click", ".tm_email_user", function() {
-        //get data value params
-        var title = $(this).data('title'); 
-        var email = $(this).data('email');
-        $('#modal_email_user .modal-title').text(title); 
-        $('#modal_email_user .modal-body #m_user_email').val(email);
-        $('#modal_email_user').modal('show'); //show the modal
-    });
-
-    //media
-    $(document).on( "click", ".tm_media", function() {
-        //get data value params
-        var title = $(this).data('title'); 
-        var type = $(this).data('type'); 
-        var file_exists = $(this).data('file_exists'); 
-        $('#modal_media .modal-body').empty(); 
-        $('#modal_media .modal-footer').empty(); 
-        $('#modal_media .modal-title').text(title); 
-        if (file_exists) {
-            var file_path = $(this).data('file_path'); 
-            var file_index = $(this).data('file_index'); 
-            var file_name = $(this).data('file_name'); 
-            var download_url = base_url+'misc/download/'+file_index+'/'+file_name; 
-            var body; 
-            switch (type) {
-                case 'img':
-                    body = `<img class="img-responsive" src="${file_path}" />`;
-                    break;
-                case 'pdf':
-                    body =  `<div id="doc_area">
-                              <object data="${file_path}?#zoom=85&scrollbar=0&toolbar=1navpanes=0" width="100%" height="400">
-                                <p class="text-danger text-center">Unable to render PDF document! Check your browser settings or switch to a different browser.</p>
-                              </object>
-                            </div>`;
-                    break;
-                default: 
-                    body = '<h4 class="text-danger m-b-15">Online media renderer unavailable, download for offline view.</h4>';
-                    break;
-            }
-            $('#modal_media .modal-body').html(body); 
-            $('#modal_media .modal-footer').append('<a type="button" class="btn btn-primary f_download"><i class="fa fa-download"></i> Download</a>'); 
-            $('#modal_media .modal-footer .f_download').attr('href', download_url); 
-        } else {
-            $('#modal_media .modal-body').html('<h4 class="text-danger">File not found!</h4>'); 
-            $('#modal_media .modal-footer').empty(); 
-        }
-        $('#modal_media').modal('show'); //show the modal
-    });
-
 });
  
 

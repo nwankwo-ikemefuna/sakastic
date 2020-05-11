@@ -1,4 +1,16 @@
 <?php 
+function xform_open($action = '', $attributes = [], $hidden = []) {
+    echo form_open($action, $attributes, $hidden);
+}
+
+function xform_open_multipart($action = '', $attributes = [], $hidden = []) {
+    echo form_open_multipart($action, $attributes, $hidden);
+}
+
+function xform_close($extra = '') {
+    echo form_close($extra);
+}
+
 function xform_pre_notice($msg = '', $class = '', $id = '') {
     $id = attr_isset($id, 'id="'.$id.'"', ''); ?>
     <div class="m-t-10 m-b-10 <?php echo $class; ?>" <?php echo $id; ?>>

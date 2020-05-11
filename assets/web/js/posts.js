@@ -46,17 +46,19 @@ jQuery(document).ready(function ($) {
   post_data.user = $('#user_posts').val();
   post_data.type = $('#type').val();
   post_data.search = $('#search_post_field').val();
+
+  //home/dash posts
   if (['home', 'dash'].includes(current_page)) {
     paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
+    ci_paginate(posts_url, posts_elem, post_container, posts_pagination, post_data, posts_elem, posts_callback);
   }
-  ci_paginate(posts_url, posts_elem, post_container, posts_pagination, post_data, posts_elem, posts_callback);
 
   //sponsored posts
   if (['home', 'posts', 'post_view'].includes(current_page)) {
-    custom_post_request('api/posts/sponsored', 'sponsored_posts', {}, (current_page == 'post_view'));
+    custom_post_request('api/posts/sponsored', 'sponsored_posts', {}, (current_page == 'post_view'), 2);
   }
 
-  function custom_post_request(url, container, data = {}, hide_actions = false) {
+  function custom_post_request(url, container, data = {}, hide_actions = false, delay = 0) {
     var callback = function(jres) {
       if (jres.status) {
         var rows = jres.body.msg;
@@ -69,7 +71,9 @@ jQuery(document).ready(function ($) {
         }
       } 
     };
-    fetch_data_ajax(base_url+url, data, 'POST', callback);
+    waitfor(delay).then(() => {
+      fetch_data_ajax(base_url+url, data, 'POST', callback);
+    });
   }
 
   //post view
@@ -100,7 +104,7 @@ jQuery(document).ready(function ($) {
           location.href = base_url+'?user_posts='+username;
         }, 3000);
       }
-      paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Loading');
+      paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Loading', 2);
     } else {
       show_toast(toast_title, jres.error, 'danger');
     }
@@ -210,7 +214,7 @@ jQuery(document).ready(function ($) {
         comments_url = 'api/comments/list',
         comments_elem = 'comments_'+pc_id,
         comments_pagination = 'comments_pagination_'+pc_id;
-      paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, `Fetching ${type == 'post' ? 'comments' : 'replies'}`);
+      paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback);
       ci_paginate(comments_url, comments_elem, comment_container, comments_pagination, comment_data, comments_elem, comments_callback);
 
       var hard_comment_action = function(jres, toast_title, toast_success, sort_by_newest = false) {
@@ -218,7 +222,7 @@ jQuery(document).ready(function ($) {
           show_toast(toast_title, toast_success, 'success');
           //if called when adding comment, we force sorting to newest first so the user can see their brand new comment
           comment_data.sort_by = sort_by_newest ? 'newest' : comment_data.sort_by;
-          paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, 'Loading');
+          paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, 'Loading', 2);
         } else {
           show_toast(toast_title, jres.error, 'danger');
         }
@@ -299,12 +303,14 @@ jQuery(document).ready(function ($) {
         hard_callback(jres, toast_title, toast_success, !is_post);
       }
       //are we using summernote?
-      if (is_post) {
-        //clear form fields
-        content.summernote('reset');
-        container.find('[name="smt_images"]').val('');
-      } else {
-        content.val('');
+      if (jres.status) {
+        if (is_post) {
+          //clear form fields
+          content.summernote('reset');
+          container.find('[name="smt_images"]').val('');
+        } else {
+          content.val('');
+        }
       }
     }
     var form_data = new FormData(obj);
@@ -371,7 +377,7 @@ jQuery(document).ready(function ($) {
       hide_actions = config.hide_actions ? true : false,
       hide_view = config.hide_view ? true : false;
     return `
-    <div class="card">
+    <div class="card ${type}">
       <div class="card-header post_info card_header_${type}">
         <span>
           <a class="clickable no_deco" href="${base_url}profile/${row.username}">
@@ -402,9 +408,7 @@ jQuery(document).ready(function ($) {
             `<div>${row.content}</div>`
           ) +
         `</div>
-        <div class="post_extra m-t-20">
-          ${row.voted == 1 ? '<small class="d-none text-muted">You upvoted this.</small>' : ''}
-          ` + 
+        <div class="post_extra m-t-20">` + 
           (type == 'post' && ! hide_view ?
             `<span class="extra"><a class="view_link" href="${base_url}posts/view/${row.id}"><i class="fa fa-external-link"></i> View</a></span>` : ''
           ) +
@@ -423,18 +427,16 @@ jQuery(document).ready(function ($) {
             ) +
             (row.is_user_post == 1 ?
               `<span class="extra">${ajax_page_link(type+'_action_container_'+pc_id, controller+'/edit_ajax/'+row.id, 'Edit', '', '', 'edit', '', '', '', 0)}</span>
-              <span class="extra"><a class="delete_post ${type}" data-type="${type}" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : 
-              ''
-            ) 
-            : ''
+              <span class="extra"><a class="delete_post ${type}" data-type="${type}" data-id="${row.id}"><i class="fa fa-trash"></i> Delete</a></span>` : ''
+            ) : ''
           ) +
           (type == 'post' ?
             `<span class="social_share">
               <a class="share_post clickable"><i class="fa fa-refresh"></i> Share</a>
               <span class="social_btns d-none">:
-                <a class="bg-twitter" href="https://twitter.com/share?url=${post_url}&text=${truncate_str(row.content)}" target="_blank" title="tweet this"><i class="fa fa-twitter"></i></a>
+                <a class="bg-twitter" href="https://twitter.com/share?url=${post_url}&text=${row.truncated_raw_content}" target="_blank" title="tweet this"><i class="fa fa-twitter"></i></a>
                 <a class="bg-facebook" href="https://www.facebook.com/sharer/sharer.php?u=${post_url}" target="_blank" title="share on your timeline"><i class="fa fa-facebook"></i></a>
-                <a class="bg-whatsapp" href="whatsapp://send?text=${truncate_str(row.content)} ${post_url}" data-action="share/whatsapp/share" target="_blank" title="share on WhatsApp"><i class="fa fa-whatsapp"></i></a>
+                <a class="bg-whatsapp" href="whatsapp://send?text=${row.truncated_raw_content} ${post_url}" data-action="share/whatsapp/share" target="_blank" title="share on WhatsApp"><i class="fa fa-whatsapp"></i></a>
               </span>
             </span>` : ''
           ) +
@@ -450,46 +452,40 @@ jQuery(document).ready(function ($) {
 
   if (['home', 'posts', 'post_view'].includes(current_page)) {
     //trending posts
-    setTimeout(function() {
-      sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {sidebar: 1});
-    }, 2000);
-    //recent posts
-    setTimeout(function() {
-      sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {sidebar: 1});
-    }, 4000);
-    //followed posts
-    setTimeout(function() {
-      sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {sidebar: 1});
-    }, 6000);
-  }
+    sidebar_card_widget('sb_trending_posts', 'api/posts/trending', {}, 4);
+    sidebar_card_widget('sb_recent_posts', 'api/posts/recent', {}, 6);
+    sidebar_card_widget('sb_followed_posts', 'api/posts/followed', {}, 8);
 
-  function sidebar_card_widget(container, url, data = {}) {
-    var callback = function(jres) {
-      if (jres.status) {
-        var rows = jres.body.msg;
-        if (!$.isEmptyObject(rows)) {
-          var html = "";
-          $.each(rows, (i, row) => {
-            html += `
-            <div class="sb_post_item">
-              <a href="${base_url+'posts/view/'+row.id}" class="no_deco content">${row.content}</a>
-              <div class="sb_post_info">
-                <small>
-                  <i class="fa fa-user"></i>
-                  <a class="clickable no_deco" href="${base_url}profile/${row.username}">${row.username}</a>
-                </small>
-                <small><i class="fa fa-comments"></i> ${row.comment_count}</small>
-                <small><i class="fa fa-thumbs-up"></i> ${row.votes}</small>
-                <small><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</small>
-              </div>
-            </div>`;
-          });
-          $('#'+container).closest('.card').show();
-          $('#'+container).html(html);
-        }
-      } 
-    };
-    fetch_data_ajax(base_url+url, data, 'POST', callback);
+    function sidebar_card_widget(container, url, data = {}, delay = 0) {
+      var callback = function(jres) {
+        if (jres.status) {
+          var rows = jres.body.msg;
+          if (!$.isEmptyObject(rows)) {
+            var html = "";
+            $.each(rows, (i, row) => {
+              html += `
+              <div class="sb_post_item">
+                <a href="${base_url+'posts/view/'+row.id}" class="no_deco content">${row.content}</a>
+                <div class="sb_post_info">
+                  <small>
+                    <i class="fa fa-user"></i>
+                    <a class="clickable no_deco" href="${base_url}profile/${row.username}">${row.username}</a>
+                  </small>
+                  <small><i class="fa fa-comments"></i> ${row.comment_count}</small>
+                  <small><i class="fa fa-thumbs-up"></i> ${row.votes}</small>
+                  <small><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</small>
+                </div>
+              </div>`;
+            });
+            $('#'+container).closest('.card').show();
+            $('#'+container).html(html);
+          }
+        } 
+      };
+      waitfor(delay).then(() => {
+        fetch_data_ajax(base_url+url, data, 'POST', callback);
+      });
+    }
   }
 
 });

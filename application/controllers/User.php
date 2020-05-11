@@ -78,7 +78,7 @@ class User extends Core_controller {
 
 	public function change_avatar() { 
 		$data['avatar'] = $this->user_details->avatar;
-		$this->dash_header('', '6?3');
+		$this->dash_header('Change Avatar', '6?3');
 		$this->load->view('user/change_avatar_ajax', $data);
 		$this->dash_footer();
 	}

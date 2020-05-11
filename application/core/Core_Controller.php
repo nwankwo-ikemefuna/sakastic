@@ -36,22 +36,6 @@ class Core_Controller extends CI_Controller {
 		$this->show_page_title = false;
 		$this->show_disclaimer = false;
 		$this->bcrumbs = [];
-
-		//set CSRF
-		$this->set_csrf();
-	}
-
-
-	private function set_csrf() {
-		//get array of controllers to be excluded
-		$excluded_controllers = [];
-		//get current controller class and check if it's in the array of controllers to be excluded
-		$current_class = $this->router->fetch_class();
-		if ( ! in_array($current_class, $excluded_controllers) ) {
-			$this->config->set_item('csrf_protection', TRUE); //allow CSRF
-		} else {
-			$this->config->set_item('csrf_protection', FALSE); //disable CSRF
-		}
 	}
 
 
@@ -143,7 +127,7 @@ class Core_Controller extends CI_Controller {
 
     public function disallowed_usernames() {
         $username = xpost('username');
-        $disallowed = ['sakastic', 'sakastic_admin', 'sakasticadmin', 'admin', 'super_admin', 'superadmin', 'lord', 'god', 'penis', 'pussy', 'vagina'];
+        $disallowed = ['sakastic', 'sakastic_admin', 'sakasticadmin', 'admin', 'super_admin', 'superadmin', 'lord', 'god', 'penis', 'pussy', 'vagina', 'fuck', 'fucker', 'boobs', 'justboobs', 'cunt', 'bitch', 'bullshit', 'motherfucker'];
         if ( ! in_array(strtolower($username), $disallowed)) return true;
         $this->form_validation->set_message('disallowed_usernames', "Why would you use <b>{$username}</b> as username? Please choose a different one.");
         return false;

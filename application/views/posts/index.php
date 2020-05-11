@@ -1,3 +1,7 @@
+<div id="sponsored_posts" class="m-b-50" style="display: none;">
+    <!-- Render posts async -->
+</div>
+
 <div id="post_section">
     <?php post_avatar("What's funny?", 'h5'); ?>
     <?php
@@ -7,19 +11,14 @@
     require 'adit.php'; ?>
 </div>
 
-<h6 class="m-t-20">Sponsored Posts</h6>
-<div id="sponsored_posts" class="m-b-50" style="display: none;">
-    <!-- Render posts async -->
-</div>
-
 <div class="row m-t-20 m-b-20">
     <div class="<?php echo grid_col(12, '', 8); ?> p-b-10">
         <div class="input-group search_btn">
-            <span class="input-group-prepend">
-                <button type="button" id="cancel_search" class="btn " title="Cancel search"><i class="fa fa-remove"></i></button>
+            <span class="input-group-prepend bg-white">
+                <button type="button" id="cancel_search" class="btn" title="Cancel search"><i class="fa fa-remove"></i></button>
             </span>
             <input type="text" id="search_post_field" class="form-control" value="<?php echo urldecode(xget('search')); ?>" placeholder="what are you looking for?">
-            <span class="input-group-append">
+            <span class="input-group-append bg-white">
                 <button type="button" id="search_posts" class="btn" title="Search posts"><i class="fa fa-search"></i></button>
             </span>
         </div>
@@ -27,11 +26,11 @@
     <div class="<?php echo grid_col(12, '', 4); ?> p-b-10">
         <div class="input-group">
             <div class="input-group-prepend">
-                <span class="input-group-text">Sort by</span>
+                <span class="input-group-text sort_input_text s_post"><i class="fa fa-sort"></i></span>
             </div>
             <?php
             $options = ['newest' => 'Newest first', 'oldest' => 'Oldest first', 'voted' => 'Most upvoted', 'popular' => 'Most commented'];
-            xform_select('', 'newest', false, ['options' => $options, 'blank' => false, 'extra' => ['id' => 'sort_posts']]); ?>
+            xform_select('', 'newest', false, ['options' => $options, 'blank' => false, 'extra' => ['id' => 'sort_posts', 'class' => 'sort_post_field']]); ?>
         </div>
     </div>
 </div>

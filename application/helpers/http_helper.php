@@ -11,6 +11,13 @@ function site_meta($page_title = '') {
     <meta name="description" content="<?php echo $ci->site_description; ?>" />
     <meta name="author" content="<?php echo $ci->site_author; ?>"  />
     <meta name="keywords" content="">
+    <!-- Facebook Open Graph control metadata -->
+    <meta property="og:site_name" content="<?php echo $ci->site_name; ?>">
+    <meta property="og:title" content="<?php echo $page_title; ?>" />
+    <meta property="og:description" content="<?php echo $ci->site_description; ?>" />
+    <meta property="og:type" content="website" />
+    <meta property="og:updated_time" content="<?php echo time(); ?>" />
+    <meta property="og:image" itemprop="image" content="<?php echo base_url(SITE_LOGO); ?>" />
 
     <link rel="shortcut icon" type="image/png" href="<?php echo base_url(SITE_FAVICON); ?>" />
     <?php
@@ -98,11 +105,31 @@ function response_headers(
 	header("Cache-Control: " . 						$cache_control);
 }
 
+function csrf_input($hidden = true) {
+    $ci =& get_instance();
+    $type = $hidden ? 'hidden' : 'text';
+    echo '<input type="'.$type.'" class="'.$ci->security->get_csrf_token_name().'" value="'.$ci->security->get_csrf_hash().'">';
+}
+
+function regenerate_csrf() {
+    $ci =& get_instance();
+    if ($ci->config->item('csrf_protection')) {
+        //NB: for this to work with forms, make sure system/helpers/form_helper/form_open() hidden csrf token input has the class as the name of the csrf token
+        //regenerate new csrf hash
+        $csrf_token_name = $ci->security->get_csrf_token_name();
+        $res[$csrf_token_name] = $ci->security->get_csrf_hash();
+        return $res;
+    }
+    return [];
+}
+
 function json_response($data = null, $status = true, $code = HTTP_OK) {
+    $ci =& get_instance();
     http_response_code($code);
     $res = ['status' => $status];
     $body = $status ? ['body' => ['msg' => $data]] : ['error' => $data];
-    $res = array_merge($res, $body);
+    $csrf_hash = regenerate_csrf();
+    $res = array_merge($res, $body, $csrf_hash);
     echo json_encode($res);
     exit;
 }
@@ -110,7 +137,7 @@ function json_response($data = null, $status = true, $code = HTTP_OK) {
 function json_response_db($is_update = false) {
 	$ci =& get_instance();
 	$error = $is_update ? 'No changes detected' : 'Sorry, something went wrong. If issue persists, report to site administrator';
-	return $ci->db->affected_rows() > 0 ? json_response() : json_response($error, false);
+	return $ci->db->affected_rows() > 0 ? json_response('Successful') : json_response($error, false);
 }
 
 function password_strength($password) {

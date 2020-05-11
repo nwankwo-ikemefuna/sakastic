@@ -13,7 +13,7 @@
 <div id="comments_section_<?php echo $pc_id; ?>" class="collapse show">
 	<div class="input-group" id="sort_comments_group_<?php echo $pc_id; ?>" style="display: none;">
         <div class="input-group-prepend">
-            <span class="input-group-text comment_sort_input_text">Sort by</span>
+            <span class="input-group-text sort_input_text s_comment"><i class="fa fa-sort"></i></span>
         </div>
 		<select class="sort_comments" width="100" id="sort_comments_<?php echo $pc_id; ?>" data-post_id="<?php echo $post_id; ?>" data-comment_id="<?php echo $comment_id; ?>">
 		  <!-- Render options dymanically-->

@@ -148,7 +148,7 @@ class Post_model extends Core_Model {
         	'p.sponsored' => 1, 
         	"p.date_created > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL p.sponsor_period DAY)" => ''
         ];
-        $data['order'] = ['p.date_created' => 'desc']; //or rand???
+        $data['order'] = 'rand';  /*['p.date_created' => 'desc']*/
 		return $data;
     }
 
@@ -275,8 +275,9 @@ class Post_model extends Core_Model {
     			'user_posts' => isset($row['user_posts']) ? shorten_number($row['user_posts']) : '', 
     			'user_comments' => isset($row['user_comments']) ? shorten_number($row['user_comments']) : '', 
     			'comment_count' => isset($row['comment_count']) ? shorten_number($row['comment_count']) : 0, 
-    			'truncated' => $truncated, 
     			'content' => $content, 
+    			'truncated' => $truncated, 
+    			'truncated_raw_content' => word_limiter($raw_content, $max), 
     			'feat_image' => $feat_image,
     			'followed' => $followed
     		]

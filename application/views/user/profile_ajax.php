@@ -11,12 +11,14 @@ data_show_grid('Nationality', $row->nationality);
 
 <h6 class="mt-3">Social Links</h6>
 <?php
-data_show_grid(_social_name('facebook'), _social_link('facebook', $row->social_facebook));
-data_show_grid(_social_name('twitter'), _social_link('twitter', $row->social_twitter));
-data_show_grid(_social_name('instagram'), _social_link('instagram', $row->social_instagram));
-data_show_grid(_social_name('linkedin'), _social_link('linkedin', $row->social_linkedin));
+data_show_grid(_social_name('facebook'), _social_link('facebook', $row));
+data_show_grid(_social_name('twitter'), _social_link('twitter', $row));
+data_show_grid(_social_name('instagram'), _social_link('instagram', $row));
+data_show_grid(_social_name('linkedin'), _social_link('linkedin', $row));
 
-function _social_link($social, $data) {
+function _social_link($social, $row) {
+	$obj = 'social_'.$social;
+	$data = $row->$obj;
 	if (!strlen($data)) return '';
 	//fix linkedin which has in/ before username
 	$link = 'https://'.$social.'.com/' . ($social == 'linkedin' ? 'in/'.$data : $data);

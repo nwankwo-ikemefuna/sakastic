@@ -38,8 +38,9 @@ function summernote_init(selector = '.summernote', tools = {}, extra = {}) {
 
 function upload_smt_image(selector, file) {
     var data = new FormData(),
-        wrapper = $(selector).closest('.smt_wrapper');
-    // console.log(wrapper);
+        wrapper = $(selector).closest('.smt_wrapper'),
+        reqlog = wrapper.find('.smt_reqlog').val();
+    if (reqlog && !user_loggedin(login_prompt)) return false;
     //appendages
     data.append('smt_file', file);
     data.append('smt_path', wrapper.find('.smt_path').val());
@@ -47,15 +48,10 @@ function upload_smt_image(selector, file) {
     data.append('smt_resize', wrapper.find('.smt_resize').val());
     data.append('smt_resize_width', wrapper.find('.smt_resize_width').val());
     data.append('smt_resize_height', wrapper.find('.smt_resize_height').val());
-    $.ajax({
-        method: 'POST',
-        url: base_url+'api/common/upload_smt_image',
-        data: data,
-        contentType: false,
-        cache: false,
-        processData: false
-    }).done(function(res) {
-        var jres = JSON.parse(res);
+    data.append('smt_reqlog', reqlog);
+    data.append(csrf_token_name, $('.'+csrf_token_name).val());
+
+    var success_callback = function(jres) {
         if (jres.status) {
             var img_src = jres.body.msg;
             var image = $('<img>').attr('src', img_src);
@@ -73,20 +69,17 @@ function upload_smt_image(selector, file) {
         } else {
             show_toast('Upload Notice', jres.error, 'danger');
         }
-    });
+    };
+    post_data_ajax(base_url+'api/common/upload_smt_image', data, true, success_callback);
 }
 
 function delete_smt_image(src) {
-    $.ajax({
-        data: {src : src},
-        type: 'POST',
-        url: base_url+'api/common/delete_smt_image',
-    }).done(function(res) {
-        var jres = JSON.parse(res);
+    var success_callback = function(jres) {
         if (jres.status) {
-            show_toast('Delete Notice', 'Image deleted successfully', 'success');
+            // show_toast('Delete Notice', 'Image deleted successfully', 'success');
         } else {
             show_toast('Delete Notice', jres.error, 'danger');
         }
-    });
+    };
+    post_data_ajax(base_url+'api/common/delete_smt_image', {src : src}, false, success_callback);
 }

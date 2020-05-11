@@ -12,8 +12,8 @@ class User_model extends Core_Model {
 		$select =  $select != '*' ? $arr['main'] : "u.*";
 		$select .= join_select($arr, 'country_name', "c.name");
 		$select .= join_select($arr, 'nationality', "c.nationality");
-		$select .= join_select($arr, 'user_posts', "up.user_posts");
-		$select .= join_select($arr, 'user_comments', "uc.user_comments");
+		$select .= join_select($arr, 'user_posts', "IFNULL(up.user_posts, 0)");
+		$select .= join_select($arr, 'user_comments', "IFNULL(uc.user_comments, 0)");
 		$select .= join_select($arr, 'user_total_content', "SUM(IFNULL(up.user_posts, 0) + IFNULL(uc.user_comments, 0))");
 		$select .= join_select($arr, 'user_votes', "SUM(IFNULL(up.user_votes, 0) + IFNULL(uc.user_votes, 0))");
 		$select .= join_select($arr, 'avatar', file_select('uploads/images/users', 'u.photo', avatar_select_default('u.sex')));

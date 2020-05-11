@@ -38,7 +38,7 @@ class User extends Core_controller {
 		}
 		if (xpost('change_pass') == 1) {
 	        $this->form_validation->set_rules('curr_password', 'Password', 'trim|required');
-	        $this->form_validation->set_rules('password', 'Password', 'trim|required|min_length[6]|callback_check_pass_strength');
+	        $this->form_validation->set_rules('password', 'Password', 'trim|required|min_length[6]');
 	        $this->form_validation->set_rules('c_password', 'Confirm Password', 'trim|required|matches[password]', ['matches'   => 'Passwords do not match']);
 	    }
         if ($this->form_validation->run() === FALSE)

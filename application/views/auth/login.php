@@ -16,12 +16,12 @@ $attrs = [
     'data-redirect' => $redirect_url, 
     'data-msg' => "Login successful. Redirecting... <p>If you are not automatically redirected, <a href='{$redirect_url}'>click here</a></p>"
 ];
-echo form_open('api/account/login', $attrs);
+xform_open('api/account/login', $attrs);
     xform_group_list('Email', 'email', 'email', '', true, ['id' => $vtype.'_email']);
     xform_group_list('Password', 'password', 'password', '', true, ['id' => $vtype.'_password']);
     xform_notice();
     xform_submit('Login', $attrs['id'], ['class' => 'btn-primary btn-block clickable m-t-20']);
-echo form_close();
+xform_close();
 ?>
 <div class="form-group mt-3 mb-0">
     <div class="text-center">

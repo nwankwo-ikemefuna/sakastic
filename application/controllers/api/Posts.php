@@ -18,9 +18,9 @@ class Posts extends Core_controller {
 
 
     public function sponsored() {
-        $limit = 3;
+        $limit = 2;
         $query = $this->post_model->sponsored_query();
-        $data = $this->post_model->get_record_list('post', ['all'], '*',$query['where'], $query['order'], $limit);
+        $data = $this->post_model->get_record_list('post', ['all'], '*', $query['where'], $query['order'], $limit);
         json_response($data);
     }
 

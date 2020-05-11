@@ -53,7 +53,7 @@ function ajax_data_table(table_id, url, columns, column_defs = [], page_length =
         ajax: {
             url: base_url + url + '/' + trashed, 
             type: "POST",
-            //data: { 'q2r_secure' : csrf_hash } //cross site request forgery protection
+            data: secure_req_data({}, false)
         },
         columns: columns,
         columnDefs: column_defs,
@@ -65,8 +65,12 @@ function ajax_data_table(table_id, url, columns, column_defs = [], page_length =
             var info = this.fnPagingInfo();
             var page = info.iPage;
             var length = info.iLength;
-        //     $('td:eq(1)', row).html(index); //counter
-        }
+            //$('td:eq(1)', row).html(index); //counter
+        },
+        //TODO: might fail. revisit when testing tables
+        drawCallback: function(jres) {
+            update_csrf_token(jres);
+        }
     });
 }
 

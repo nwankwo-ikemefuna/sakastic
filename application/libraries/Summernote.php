@@ -11,6 +11,10 @@ class Summernote {
 
 
 	public function upload() {
+        $smt_reqlog = xpost('smt_reqlog');
+        //is login required?
+        if ($smt_reqlog == 1 && ! $this->ci->session->user_loggedin)
+        	json_response('You are not loggedin', false);
         $path = xpost('smt_path');
         //is upload path set?
         if ( ! strlen($path)) 
@@ -102,6 +106,7 @@ class Summernote {
 		$resize = $config['resize'] ?? true;
 		$resize_width = $config['resize_width'] ?? 200;
 		$resize_height = $config['resize_height'] ?? 200;
+		$reqlog = $config['reqlog'] ?? 0;
 		$content = $config['content'] ?? '';
 		$images = strlen($content) ? join("[***]", $this->extract($content)) : '';
 		//hidden inputs
@@ -110,6 +115,7 @@ class Summernote {
 	    $input .= '<input type="hidden" class="smt_resize" value="'.$resize.'">';
 	    $input .= '<input type="hidden" class="smt_resize_width" value="'.$resize_width.'">';
 	    $input .= '<input type="hidden" class="smt_resize_height" value="'.$resize_height.'">';
+	    $input .= '<input type="hidden" class="smt_reqlog" value="'.$reqlog.'">';
 	    $input .= '<input type="hidden" name="'.$name.'" class="smt_images form-control" value="'.$images.'">';
 	    if ($return) return $input;
 	    echo $input;

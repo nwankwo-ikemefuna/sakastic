@@ -1,7 +1,7 @@
 function payWithPaystack(verify_url, data, success_callback, onclose = null) {
     var ref = ''+Math.floor((Math.random() * 1000000000) + 1);
     var handler = PaystackPop.setup({
-        key: 'paystack_public_key_*****', // Replace with your public key
+        key: 'pk_test_c500f9d42c0d994e4a92578384cd10e11801f9d0',
         email: data.email,
         amount: data.amount * 100,
         firstname: data.first_name,
@@ -33,19 +33,9 @@ function payWithPaystack(verify_url, data, success_callback, onclose = null) {
                 last_name: data.last_name,
                 provider: 'PayStack'
             };
-            $.ajax({
-                url: base_url+verify_url,
-                type: 'POST',
-                dataType: "json",
-                data: payload
-            })
-            .done(function (jres) {
-                if (typeof success_callback === 'function') {
-                    success_callback(jres);
-                }
-            });
+            post_data_ajax(base_url+verify_url, payload, false, success_callback);
         }
     });
-
+    //open iframe
     handler.openIframe();
 }

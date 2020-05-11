@@ -11,7 +11,6 @@ $(document).ajaxComplete(function() {
     initializePlugins();
 });
 
-
 jQuery(document).ready(function ($) {
     "use strict";  
 
@@ -246,7 +245,7 @@ function more_less(elem, link_class = '') {
     });
 }
 
-function show_toast(title, msg = 'All done!', type = 'info', container ='body', delay = 10, subtitle = '') {
+function show_toast(title, msg = 'All done!', type = 'info', container ='body', delay = 5, subtitle = '') {
     $.toast({
         container: $(container),
         title: title,
@@ -345,6 +344,96 @@ function ajax_loading_hide() {
         $('#ajax_overlay_loader').hide();
         $('#ajax_overlay_loader #overlay_text').text('');
     }
+}
+
+function secure_req_data (data, is_form_data) {
+    // append csrf token to data for journey to server
+    var csrf_hash = $('.'+csrf_token_name).val() || '';
+    if ( ! csrf_hash.length) {
+        //log for debugging
+        console.error('CSRF: CSRF token not set!');
+    }
+    data = is_form_data ? data : {...data, ...{[csrf_token_name]: csrf_hash}};
+    return data;
+}
+
+function update_csrf_token(jres) {
+    //update csrf token against next request is regeneration is required for every new request
+    var curr_csrf_hash = $('.'+csrf_token_name).val();
+    var csrf_hash = jres[csrf_token_name] || '';
+    // console.log('New token:', csrf_hash);
+    if ( ! csrf_hash.length) {
+        //log for debugging
+        console.error('CSRF: CSRF token not set!');
+        return false;
+    }
+    //update
+    $('.'+csrf_token_name).val(csrf_hash);
+    //ensure the new token has been updated
+    return ($('.'+csrf_token_name).val() != curr_csrf_hash && $('.'+csrf_token_name).val() == csrf_hash);
+}
+
+function resolve_promise(resolve, reject, jres) {
+    if (update_csrf_token(jres)) { 
+        resolve(jres);
+    } else {
+        reject_promise(reject, 'Could not update CSRF token!');
+    }
+}
+
+function reject_promise(reject, error) {
+    reject(error);
+    regenerate_csrf_token();
+}
+
+function finalize_promise() {
+    //hide the loader if it was visible
+    ajax_loading_hide();
+}
+
+function retry_promise(operation, delay, retries) {
+    return new Promise((resolve, reject) => {
+        return operation()
+            .then(resolve)
+            .catch((reason) => {
+                if (retries - 1 > 0) {
+                    return waitfor(delay)
+                    .then(retry_promise().bind(null, operation, delay, retries - 1))
+                    .then(resolve)
+                    .catch(reject);
+                }
+            return reject(reason);
+        });
+    });
+}
+
+function waitfor(t = 3) {
+    return new Promise(resolve => setTimeout(resolve, t*1000));
+}
+
+function delay(t = 3) {
+    return function (x) {
+        return new Promise(resolve => setTimeout(() => resolve(x), t*1000));
+    }
+}
+
+function handle_promise(promise, then_callback, catch_callback = null, finally_callback = null) {
+    promise.then(function(res) {
+        if (typeof then_callback === 'function') {
+            then_callback(res);
+        }
+        console.log('Promise success:', res);
+    });
+    promise.catch(function(res) {
+        if (typeof catch_callback === 'function') {
+            then_callback(res);
+        }
+    });
+    promise.finally(function() {
+        if (typeof finally_callback === 'function') {
+            finally_callback();
+        }
+    });
 }
 
 /**

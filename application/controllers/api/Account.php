@@ -10,7 +10,7 @@ class Account extends Core_controller {
     public function register() {
         $this->form_validation->set_rules('email', 'Email', 'trim|required|valid_email|is_unique['.T_USERS.'.email]', ['is_unique' => 'Email is already registered with us. Please login or use a different email']);
         $this->form_validation->set_rules('username', 'Username', 'trim|required|alpha_numeric|min_length[3]|max_length[15]|is_unique['.T_USERS.'.username]|callback_disallowed_usernames', ['is_unique' => 'Username not available']);
-        $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_pass_strength');
+        $this->form_validation->set_rules('password', 'Password', 'trim|required|min_length[6]');
         $this->form_validation->set_rules('c_password', 'Confirm Password', 'trim|required|matches[password]', ['matches'   => 'Passwords do not match']);
         if ($this->form_validation->run() === FALSE)
             json_response(validation_errors(), false);
@@ -21,8 +21,10 @@ class Account extends Core_controller {
             'password_set' => 1,
             'password' => password_hash(xpost('password'), PASSWORD_DEFAULT)
         ];
-        $this->common_model->insert(T_USERS, $data);
-        json_response();
+        $id = $this->common_model->insert(T_USERS, $data);
+        //log user in sharpally
+        $this->session->set_userdata($this->auth->login_data($id));
+        json_response('Successful');
     }
 
 
@@ -68,7 +70,7 @@ class Account extends Core_controller {
         if ( ! $count) 
             json_response('Invalid username or code!', false);
         $this->form_validation->set_rules('username', 'Username', 'trim|required');
-        $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_pass_strength');
+        $this->form_validation->set_rules('password', 'Password', 'trim|required|min_length[6]');
         $this->form_validation->set_rules('c_password', 'Confirm Password', 'trim|required|matches[password]', ['matches'   => 'Passwords do not match']);
         if ($this->form_validation->run() === FALSE)
             json_response(validation_errors(), false);

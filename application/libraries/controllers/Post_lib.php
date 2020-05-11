@@ -16,7 +16,7 @@ class Post_lib {
 
 
     public function list($page, $where, $order = [], $count_joins = [], $having = '') {
-        $per_page = 3;
+        $per_page = 10;
         $page = paginate_offset($page, $per_page);
         $records = $this->ci->post_model->get_record_list($this->type, ['all'], '*', $where, $order, $per_page, $page, $having);
         $total_records = $this->ci->post_model->get_total_record($this->type, $where, $count_joins, $having);
@@ -52,25 +52,32 @@ class Post_lib {
         $this->ci->form_validation->set_rules('smt_images', 'Images', 'trim');
         if ($this->ci->form_validation->run() === FALSE)
             json_response(validation_errors(), false);
-        $content = xpost('content');
-        $raw_content = strip_tags($content);
-        //TODO: prevent image only content
-        $extracted = $this->ci->summernote->extract($content);
-        if (!strlen($raw_content)) {
-            json_response('You may have forgotten to type something.', false);
-        }
-        //delete images uploaded but where removed from the content field
-        $this->ci->summernote->remove_files(xpost('content'), xpost('smt_images'), $this->img_upload_path);
-        $data = [
-            'user_id' => $this->ci->session->user_id,
-            'content' => ucfirst(xpost_txt('content'))
-        ];
-        //if comment, append post and comment idx to array
-        if ($this->type == 'comment') {
-            $data = array_merge($data, [
+
+        if ($this->type == 'post') {
+            $content = xpost('content');
+            $raw_content = strip_tags($content);
+            //TODO: prevent image only content
+            $extracted = $this->ci->summernote->extract($content);
+            if (!strlen($raw_content)) {
+                json_response('You may have forgotten to type something.', false);
+            }
+            //delete images uploaded but were removed from the content field
+            $this->ci->summernote->remove_files($content, xpost('smt_images'), $this->img_upload_path);
+            $data = [
+                'user_id' => $this->ci->session->user_id,
+                'content' => ucfirst(xpost_txt('content'))
+            ];
+        } else {
+            //strip image tags
+            $content = ucfirst(xpost_txt('content'));
+            $content = $this->ci->security->strip_image_tags($content);
+            //if comment, append post and comment idx to array
+            $data = [
+                'user_id' => $this->ci->session->user_id,
+                'content' => $content,
                 'post_id' => xpost('post_id'),
                 'parent_id' => xpost('comment_id')
-            ]);
+            ];
         }
         return $data;
     }

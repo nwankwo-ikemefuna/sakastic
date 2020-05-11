@@ -15,6 +15,12 @@ class Common extends Core_controller {
     }
 
 
+    public function regenerate_csrf() {
+        //the logic is already defined in json_response(), so...
+        json_response();
+    }
+
+
     public function trash_ajax() { 
         $this->crud->trash_ajax();
     }

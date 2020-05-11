@@ -3,13 +3,24 @@
 		<div class="card">
 			<?php 
 			if ($is_me) { ?>
-				<div class="card-header text-center">
-					<?php ajax_page_button('ajax_page_container', $this->c_controller.'/dash', 'Dashboard', 'btn-default btn-sm', '', 'dashboard'); ?>
-					<?php ajax_page_button('ajax_page_container', $this->c_controller.'/profile', 'Profile', 'btn-default btn-sm', '', 'user'); ?>
-					<?php ajax_page_button('ajax_page_container', $this->c_controller.'/edit', 'Edit Profile', 'btn-default btn-sm', '', 'edit'); ?>
-					<?php ajax_page_button('ajax_page_container', $this->c_controller.'/change_avatar', 'Change Avatar', 'btn-default btn-sm', '', 'picture-o'); ?>
-					<?php ajax_page_button('ajax_page_container', $this->c_controller.'/reset_account', 'Account Settings', 'btn-default btn-sm', '', 'wrench'); ?>
-					<?php //ajax_page_button('ajax_page_container', $this->c_controller.'/notification', 'Notification Settings', 'btn-default btn-sm', '', 'bell'); ?>
+				<div class="card-header bg_f5">
+					<div class="row">
+						<div class="col-12 col-sm-4 col-lg-3">
+							<?php ajax_page_button('ajax_page_container', $this->c_controller.'/dash', 'Dashboard', 'btn-default btn-sm text-bold', '', ''); ?>
+						</div>
+						<div class="col-12 col-sm-4 col-lg-3">
+							<?php ajax_page_button('ajax_page_container', $this->c_controller.'/profile', 'Profile', 'btn-default btn-sm text-bold', '', ''); ?>
+						</div>
+						<div class="col-12 col-sm-4 col-lg-3">
+							<?php ajax_page_button('ajax_page_container', $this->c_controller.'/edit', 'Edit Profile', 'btn-default btn-sm text-bold', '', ''); ?>
+						</div>
+						<div class="col-12 col-sm-4 col-lg-3">
+							<?php ajax_page_button('ajax_page_container', $this->c_controller.'/change_avatar', 'Change Avatar', 'btn-default btn-sm text-bold', '', ''); ?>
+						</div>
+						<div class="col-12 col-sm-4 col-lg-4">
+							<?php ajax_page_button('ajax_page_container', $this->c_controller.'/reset_account', 'Account Settings', 'btn-default btn-sm text-bold', '', ''); ?>
+						</div>
+					</div>
 				</div>
 				<?php 
 			} ?>

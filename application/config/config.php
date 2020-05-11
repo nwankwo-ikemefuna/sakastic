@@ -30,10 +30,14 @@ date_default_timezone_set('Africa/Lagos');
 //use set environment to determine base_url
 switch (ENVIRONMENT) {
 
-    case 'testing':
     case 'production': 
         //testing/production server
         $config['base_url'] = 'https://sakastic.com/';
+    break;
+
+    case 'testing': 
+        //testing/production server
+        $config['base_url'] = 'https://softbytech.com/staging/sakastic/';
     break;
 
     case 'development':
@@ -473,12 +477,11 @@ $config['global_xss_filtering'] = FALSE;
 | 'csrf_regenerate' = Regenerate token on every submission
 | 'csrf_exclude_uris' = Array of URIs which ignore CSRF checks
 */
-//Note: $config['csrf_protection'] is commented off here so that some URIs (esp APIs) can be excluded from the CSRF protection, as $config['csrf_exclude_uris'] does not seem to work. See Core_controller.php
-//$config['csrf_protection'] = TRUE;
-$config['csrf_token_name'] = 'q2r_secure';
-$config['csrf_cookie_name'] = 'q2r_csrf_cookie';
+$config['csrf_protection'] = TRUE;
+$config['csrf_token_name'] = 'softbytech_secure';
+$config['csrf_cookie_name'] = 'softbytech_csrf_cookie';
 $config['csrf_expire'] = 7200;
-$config['csrf_regenerate'] = FALSE;
+$config['csrf_regenerate'] = TRUE;
 $config['csrf_exclude_uris'] = array();
 
 /*

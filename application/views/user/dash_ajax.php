@@ -11,21 +11,27 @@
 	        	<h2><?php echo $row->username; ?></h2>
 		        <small class="text-muted"><?php echo $row->nationality; ?></small>
 		        <div class="icon-block">
-		        	<a href="<?php echo strlen($row->social_facebook) ? 'https://facebook.com/'.$row->social_facebook : '#!'; ?>" title="Connect on Facebook" target="_blank"> <i class="fa fa-facebook bg-facebook"></i></a>
-		        	<a href="<?php echo strlen($row->social_twitter) ? 'https://twitter.com/'.$row->social_twitter : '#!'; ?>" title="Connect on Twitter" target="_blank"> <i class="fa fa-twitter bg-twitter"></i></a>
-		        	<a href="<?php echo strlen($row->social_instagram) ? 'https://instagram.com/'.$row->social_instagram : '#!'; ?>" title="Connect on Instagram" target="_blank"> <i class="fa fa-instagram bg-instagram"></i></a>
-		        	<a href="<?php echo strlen($row->social_linkedin) ? 'https://linkedin.com/in/'.$row->social_linkedin : '#!'; ?>" title="Connect on LinkedIn"target="_blank"> <i class="fa fa-linkedin bg-linkedin"></i></a>
+		        	<?php 
+		        	_social_link_icon('facebook', $row);
+		        	_social_link_icon('twitter', $row);
+		        	_social_link_icon('instagram', $row);
+		        	_social_link_icon('linkedin', $row);
+		        	?>
 		        </div>
 		    </div>
 	    </div>
 	</div>
 </div>
 <div class="mt-3 text-center text-muted" style="font-style: italic;">
-	<h6>
-		<i class="fa fa-quote-left"></i>
-		<?php echo $row->quote; ?>
-		<i class="fa fa-quote-right"></i> 
-	</h6>
+	<?php 
+	if (strlen($row->quote)) { ?>
+		<h6>
+			<i class="fa fa-quote-left"></i>
+			<?php echo $row->quote; ?>
+			<i class="fa fa-quote-right"></i> 
+		</h6>
+		<?php 
+	} ?>
 </div>
 <div class="row mt-5">
     <?php _info_card('Posts', $row->user_posts, 'book'); ?>
@@ -45,4 +51,13 @@ function _info_card($title, $data, $icon) { ?>
         </div>
     </div>
     <?php
-} ?>
+} 
+
+function _social_link_icon($social, $row) { 
+	$obj = 'social_'.$social;
+	$data = $row->$obj;
+	if (!strlen($data)) return '';
+	//fix linkedin which has in/ before username
+	$link = 'https://'.$social.'.com/' . ($social == 'linkedin' ? 'in/'.$data : $data); 
+	echo '<a href="'.$link.'" target="_blank" title="Connect on '.ucfirst($social).'"><i class="fa fa-'.$social.' bg-'.$social.'"></i></a>';
+}

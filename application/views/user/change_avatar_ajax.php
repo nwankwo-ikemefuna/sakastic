@@ -1,7 +1,7 @@
 <?php
 $attrs = ['id' => 'change_avatar_form', 'class' => 'ajax_form', 'data-type' => 'redirect', 'data-redirect' => '_ajax_dynamic'];
-echo form_open_multipart('api/user/change_avatar', $attrs); ?>
-	<div class="text-center">
+xform_open_multipart('api/user/change_avatar', $attrs); ?>
+	<div class="">
 		<?php 
 		xform_help(['help' => "JPG and PNG images allowed, max 100kb. For better rendering, upload a square image.
 			<br /> 
@@ -11,8 +11,7 @@ echo form_open_multipart('api/user/change_avatar', $attrs); ?>
 		<input type="file" name="photo" accept=".jpg,.jpeg,.png" style="display: none;" />
 		<?php 
 		xform_notice();
-		xform_submit('Change', '', ['class' => 'btn-primary']); ?>
+		xform_submit('Change', '', ['class' => 'btn-primary btn_raised_sm']); ?>
 	</div>
 	<?php
-echo form_close();
-?>
+xform_close();
