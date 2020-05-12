@@ -3,7 +3,13 @@
 </div>
 
 <div id="post_section">
-    <?php post_avatar("What's funny?", 'h5'); ?>
+    <?php post_avatar("What's funny?"); ?>
+    <div class="text-bold">Before you post it...</div>
+    <ul class="ul_aligned">
+        <li>If your post will make us laugh, post it here.</li>
+        <li>Promotional content will be removed and you risk getting banned from this platform.</li>
+        <li>To add images to your post, click on the <i class="fa fa-image"></i> icon. Maximum image size allowed is 200kb.</li>
+    </ul>
     <?php
     $ajax_page = 'add';
     $type = 'post';

@@ -12,7 +12,7 @@ jQuery(document).ready(function ($) {
     id: ''
   },
   post_container = function(row, config = {}) {
-    return `<div class="post_container m-b-15" id="post_con_${row.id}">
+    return `<div class="post_container" id="post_con_${row.id}">
         ${post_widget(row, 'post', config)}</div>`;
   },
   posts_callback = function(jres) {
@@ -98,7 +98,7 @@ jQuery(document).ready(function ($) {
   //post action callback
   var hard_post_action = function(jres, toast_title, toast_success, redirect = false) {
     if (jres.status) {
-      show_toast(toast_title, toast_success, 'success');
+      // show_toast(toast_title, toast_success, 'success');
       if (redirect) {
         setTimeout(function(){
           location.href = base_url+'?user_posts='+username;
@@ -122,8 +122,9 @@ jQuery(document).ready(function ($) {
     var id = $(this).data('id'),
         container = $(this).closest('.post_container').attr('id'),
         controller = type+'s',
+        is_open = $(this).closest('.post_container').find('.post_more_less').data('is_open'),
         is_post_view = $('#is_post_view').val();
-    soft_post_action('post', 'api/posts/follow', {id, is_post_view}, container, false, false, false, false, 'Follow Notice');
+    soft_post_action('post', 'api/posts/follow', {id, is_open, is_post_view}, container, false, false, false, false, 'Follow Notice');
   });
 
   //deleting
@@ -177,13 +178,14 @@ jQuery(document).ready(function ($) {
     var type = $(this).data('type'),
         post_id = $(this).data('post_id'),
         comment_id = $(this).data('comment_id'),
+        container = $(this).closest('.post_container').attr('id'),
         pc_id = post_id+'_'+comment_id,
-        container = type+'_action_container_'+pc_id,
+        action_container = type+'_action_container_'+pc_id,
         sort_by = 'oldest',
         comment_data = {post_id, comment_id, sort_by};
-    $('#'+container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
+    $('#'+action_container).load(base_url+'comments/list_ajax/'+post_id+'/'+comment_id, function() {
       var comment_container = function(row) {
-          return `<div class="post_container m-b-15" id="comment_con_${row.comment_id}">
+          return `<div class="post_container" id="comment_con_${row.comment_id}">
               ${post_widget(row, 'comment')}</div>`;
         },
         comment_sort_options = function(current_val) {
@@ -203,7 +205,7 @@ jQuery(document).ready(function ($) {
         comments_callback = function(jres) {
           var count = jres.body.msg.total_rows_formatted,
             info_msg = (type == 'post' ? 'Comments' : 'Replies') + ` (${count})`;
-            info_msg += count > 0 ? ` <span class="m-l-10"><i class="fa fa-eye-slash text-secondary"></i> <a class="text-primary text-bold clickable f-s-14" data-toggle="collapse" data-target="#comments_section_${pc_id}">Hide/show</a></span>` : 
+            info_msg += count > 0 ? ` <span class="m-l-10"><i class="fa fa-eye-slash text-secondary"></i> <a class="text-primary text-bold clickable comment_title" data-toggle="collapse" data-target="#comments_section_${pc_id}">Hide/show</a></span>` : 
             '';
           if (count > 0) {
             $('#sort_comments_group_'+pc_id).show();
@@ -215,11 +217,11 @@ jQuery(document).ready(function ($) {
         comments_elem = 'comments_'+pc_id,
         comments_pagination = 'comments_pagination_'+pc_id;
       paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback);
-      ci_paginate(comments_url, comments_elem, comment_container, comments_pagination, comment_data, comments_elem, comments_callback);
+      ci_paginate(comments_url, comments_elem, comment_container, comments_pagination, comment_data, container, comments_callback);
 
       var hard_comment_action = function(jres, toast_title, toast_success, sort_by_newest = false) {
         if (jres.status) {
-          show_toast(toast_title, toast_success, 'success');
+          // show_toast(toast_title, toast_success, 'success');
           //if called when adding comment, we force sorting to newest first so the user can see their brand new comment
           comment_data.sort_by = sort_by_newest ? 'newest' : comment_data.sort_by;
           paginate_data(comments_url, comments_elem, comment_container, comments_pagination, 0, comment_data, comments_callback, null, true, 'Loading', 2);
@@ -354,7 +356,7 @@ jQuery(document).ready(function ($) {
         container = $(this).closest('.post_container').attr('id'),
         controller = type+'s',
         is_post_view = $('#is_post_view').val();
-    soft_post_action(type, 'api/'+controller+'/view', {id, is_post_view}, container);
+    soft_post_action(type, 'api/'+controller+'/view', {id, is_post_view}, container, false, false, true);
   });
 
   //voting
@@ -364,8 +366,9 @@ jQuery(document).ready(function ($) {
         id = $(this).data('id'),
         container = $(this).closest('.post_container').attr('id'),
         controller = type+'s',
+        is_open = $(this).closest('.post_container').find('.post_more_less').data('is_open'),
         is_post_view = $('#is_post_view').val();
-    soft_post_action(type, 'api/'+controller+'/vote', {id, is_post_view}, container, false, false, false, false, 'Vote Notice');
+    soft_post_action(type, 'api/'+controller+'/vote', {id, is_open, is_post_view}, container, false, false, false, false, 'Vote Notice');
   });
 
   //Posts/comments/replies widget
@@ -377,22 +380,28 @@ jQuery(document).ready(function ($) {
       hide_actions = config.hide_actions ? true : false,
       hide_view = config.hide_view ? true : false;
     return `
-    <div class="card ${type}">
-      <div class="card-header post_info card_header_${type}">
-        <span>
+    <div class="${type == 'post' ? 'card' : 'comment_card'} ${type}">
+      <div class="${type == 'post' ? 'card-header' : ''} card_header_${type} post_info">
+        <div class="post_avatar">
           <a class="clickable no_deco" href="${base_url}profile/${row.username}">
             <img src="${base_url+row.avatar}" width="28" height="28" class="rounded-circle">
           </a>
-          ${ $('#user_posts').val().length == 0 ? 
-            `<a class="clickable no_deco" href="${base_url}profile/${row.username}">${row.username}</a>` : row.username }
-          <a class="user_stats" href="${user_posts_url}" title="votes"><i class="fa fa-circle text-secondary"></i> ${row.user_votes}</a>
-          <a class="user_stats" href="${user_posts_url}" title="posts"><i class="fa fa-circle text-secondary"></i> ${row.user_posts}</a>
-          <a class="user_stats" href="${user_posts_url}" title="comments"><i class="fa fa-circle text-secondary"></i> ${row.user_comments}</a>
-        </span>
-        <span><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</span>
-        ${row.sponsored == 1 ? `<small class="text-muted float-sm-right d-inline-block">Sponsored</small>` : ''}
+        </div>
+        <div class="post_nuggets">
+          <div class="author_info">
+            ${ $('#user_posts').val().length == 0 ? 
+              `<a class="clickable no_deco" href="${base_url}profile/${row.username}">${row.username}</a>` : row.username }
+            <a class="user_stats" href="${user_posts_url}" title="votes"><i class="fa fa-circle text-secondary"></i> ${row.user_votes}</a>
+            <a class="user_stats" href="${user_posts_url}" title="posts"><i class="fa fa-circle text-secondary"></i> ${row.user_posts}</a>
+            <a class="user_stats" href="${user_posts_url}" title="comments"><i class="fa fa-circle text-secondary"></i> ${row.user_comments}</a>
+          </div>
+          <div class="extra float-sm-right">
+            <span class="text-muted"><i class="fa fa-clock-o"></i> ${$.timeago(row.date_created)}</span>
+            ${row.sponsored == 1 ? `<span class="text-muted d-inline-block"><i class="fa fa-flag"></i> Sponsored</span>` : ''}
+          </div>
+        </div>
       </div>
-      <div class="card-body">
+      <div class="${type == 'post' ? 'card-body' : 'comment_card_body'}">
         <div id="${type}_view_container_${row.id}" class="post_content">` + 
           (row.truncated ? 
             `<div>
@@ -403,12 +412,12 @@ jQuery(document).ready(function ($) {
               ${row.content}
             </div>` + 
             ( ! hide_actions ? 
-              `<p class="mt-1">${ajax_page_link(type+'_view_container_'+row.id, controller+'/view_ajax/'+row.id, 'Read more', 'theme_link_red clickable text-bold', '', '', '', '', '', 0)}</p>` : ''
+              `<p class="mt-1 post_more_less" data-is_open="0">${ajax_page_link(type+'_view_container_'+row.id, controller+'/view_ajax/'+row.id, 'Read more', 'theme_link_red clickable text-bold', '', '', '', '', '', 0)}</p>` : ''
             ) : 
-            `<div>${row.content}</div>`
+            `<div class="post_more_less" data-is_open="1">${row.content}</div>`
           ) +
         `</div>
-        <div class="post_extra m-t-20">` + 
+        <div class="post_actions ${type}">` + 
           (type == 'post' && ! hide_view ?
             `<span class="extra"><a class="view_link" href="${base_url}posts/view/${row.id}"><i class="fa fa-external-link"></i> View</a></span>` : ''
           ) +

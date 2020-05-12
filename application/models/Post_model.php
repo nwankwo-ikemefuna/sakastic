@@ -189,14 +189,14 @@ class Post_model extends Core_Model {
             		break;
             }
         } 
+        //filter out sponsored posts
+        $data['where'] = array_merge($data['where'], ['p.sponsored' => 0]);
         //searching?
         if (strlen(xpost('search'))) {
             $this_where = $this->search();
             //merge to previous where
-            $where = array_merge($data['where'], [$this_where => null]);
+            $data['where'] = array_merge($data['where'], [$this_where => null]);
         } 
-        //filter out sponsored posts
-        $data['where'] = array_merge($data['where'], ['p.sponsored' => 0]);
         return $data;
     }
 
@@ -240,6 +240,8 @@ class Post_model extends Core_Model {
     	//remove all tags from content and truncate to some words
     	$raw_content = strip_tags($row['content']);
     	$max = $simple ? 7 : 30;
+    	//is post open?
+    	$is_open = (xpost('is_open') == 1);
     	//are we viewing single post?
     	$is_post_view = (xpost('is_post_view') == 1);
     	//simple (eg for sidebar) ?
@@ -247,7 +249,7 @@ class Post_model extends Core_Model {
 	    	$truncated = true;
 	    	$content = word_limiter($raw_content, $max);
 	    } else {
-	    	if ($is_post_view) {
+	    	if ($is_open || $is_post_view) {
 	    		$truncated = false;
 		    	$content = $row['content'];
 		    } else {

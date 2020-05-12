@@ -1,18 +1,5 @@
 <?php
 $img_max_size = 200;
-?>
-
-<?php
-if ($ajax_page == 'add' && $type == 'post') { ?>
-	<div class="m-l-20 text-bold">Before you post it...</div>
-	<ul>
-		<li>If your post will make us laugh, post it here.</li>
-		<li>Promotional content will be removed and you risk getting banned from this platform.</li>
-		<li>To add images to your post, click on the <i class="fa fa-image"></i> icon. Maximum image size allowed is <?php echo $img_max_size; ?>kb.</li>
-	</ul>
-	<?php 
-} 
-
 $row = $ajax_page == 'edit' ? $row : '';
 $form_attributes = [
 	'class' => $ajax_page.'_post_form '.$type,
@@ -50,15 +37,15 @@ xform_open(NULL, $form_attributes);
 		xform_input('content', 'textarea', adit_value($row, 'content', '', true), false, ['rows' => 3, 'class' => '']);
 	} ?>
 	<div class="form-group m-t-10">
-		<button type="submit" class="btn-primary btn_raised_<?php echo $type == 'post' ? 'md' : 'sm'; ?>"><?php echo $ajax_page == 'add' ? 'Post It' : 'Update'; ?></button>
+		<button type="submit" class="btn-primary btn_raised_<?php echo $type == 'post' ? 'md' : 'xs'; ?>"><?php echo $ajax_page == 'add' ? 'Post It' : 'Update'; ?></button>
 		<?php
 		if ($ajax_page == 'add' && $type == 'comment') { ?>
-			<button type="button" class="btn-secondary btn_raised_<?php echo $type == 'post' ? 'md' : 'sm'; ?>" data-toggle="collapse" data-target="#comment_add_<?php echo $pc_id; ?>">Cancel</button>
+			<button type="button" class="btn-secondary btn_raised_<?php echo $type == 'post' ? 'md' : 'xs'; ?>" data-toggle="collapse" data-target="#comment_add_<?php echo $pc_id; ?>">Cancel</button>
 			<?php
 		} ?>
 		<?php
 		if ($ajax_page == 'edit') { ?>
-			<button type="button" class="btn-secondary btn_raised_<?php echo $type == 'post' ? 'md' : 'sm'; ?>" data-toggle="collapse" data-target="#ac_<?php echo $type.'_'.$id; ?>">Cancel</button>
+			<button type="button" class="btn-secondary btn_raised_<?php echo $type == 'post' ? 'md' : 'xs'; ?>" data-toggle="collapse" data-target="#ac_<?php echo $type.'_'.$id; ?>">Cancel</button>
 			<?php
 		} ?>
 	</div>
