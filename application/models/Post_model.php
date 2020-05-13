@@ -14,10 +14,10 @@ class Post_model extends Core_Model {
 		if ($type == 'post') {
 			$select .= join_select($arr, 'post_id', "p.id");
 			$select .= join_select($arr, 'comment_id', "0");
-			$select .= join_select($arr, 'comment_count', "COUNT(c.post_id)");
+			$select .= join_select($arr, 'comment_count', "IFNULL(c.comment_count, 0)");
 		} else {
 			$select .= join_select($arr, 'comment_id', "c.id");
-			$select .= join_select($arr, 'comment_count', "COUNT(r.parent_id)");
+			$select .= join_select($arr, 'comment_count', "IFNULL(r.comment_count, 0)");
 			$select .= join_select($arr, 'followed', "0");
 			$select .= join_select($arr, 'sponsored', "0");
 		}
@@ -33,14 +33,22 @@ class Post_model extends Core_Model {
 			//comments
 			if (in_array('c', $to_join) || in_array('all', $to_join)) {
 				$joins = array_merge($joins, 
-					[T_COMMENTS.' c' => ['c.post_id = p.id']]
+					["(
+						SELECT `post_id`, COUNT(`post_id`) AS comment_count
+					    FROM `".T_COMMENTS."`
+					    GROUP BY `post_id`
+					) `c`" => ["`c`.`post_id` = `p`.`id`", 'left', false]]
 				);
 			}
 		} else {
 			//replies
 			if (in_array('r', $to_join) || in_array('all', $to_join)) {
 				$joins = array_merge($joins, 
-					[T_COMMENTS.' r' => ['r.parent_id = c.id']]
+					["(
+						SELECT `parent_id`, COUNT(`parent_id`) AS comment_count
+					    FROM `".T_COMMENTS."`
+					    GROUP BY `parent_id`
+					) `r`" => ["`r`.`parent_id` = `c`.`id`", 'left', false]]
 				);
 			}
 		}

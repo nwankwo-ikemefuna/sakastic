@@ -129,8 +129,8 @@ class Core_Model extends CI_Model {
      * get rows for ajax using Ignited Datatables library
      * @return object
      */
-    public function get_rows_ajax($table, $keys, $buttons, $trashed = 0, $joins = [], $select = '', $where = [], $order = [], $group_by = '', $limit = '', $offset = 0) {
-        $this->prepare_query($table, $trashed, $joins, $select, $where, $order, $group_by, $limit, $offset, true);
+    public function get_rows_ajax($table, $keys, $buttons, $trashed = 0, $joins = [], $select = '', $where = [], $order = [], $group_by = '', $limit = '', $having = '', $offset = 0) {
+        $this->prepare_query($table, $trashed, $joins, $select, $where, $order, $group_by, $limit, $offset, $having, true);
         //Bulk action column
         //Note: $1 assumes that the primary key column (usually id), is the first key
         $this->datatables->add_column('checker', xform_input('ba_record_idx[]', 'checkbox', '$1', false, ['class' => 'ba_record'], true), 'id');

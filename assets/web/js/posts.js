@@ -48,14 +48,14 @@ jQuery(document).ready(function ($) {
   post_data.search = $('#search_post_field').val();
 
   //home/dash posts
-  if (['home', 'dash'].includes(current_page)) {
+  if (['home', 'dash', 'profile'].includes(current_page)) {
     paginate_data(posts_url, posts_elem, post_container, posts_pagination, 0, post_data, posts_callback, null, true, 'Fetching posts');
     ci_paginate(posts_url, posts_elem, post_container, posts_pagination, post_data, posts_elem, posts_callback);
   }
 
   //sponsored posts
   if (['home', 'posts', 'post_view'].includes(current_page)) {
-    custom_post_request('api/posts/sponsored', 'sponsored_posts', {}, (current_page == 'post_view'), 2);
+    custom_post_request('api/posts/sponsored', 'sponsored_posts', {}, (current_page == 'post_view'), 3);
   }
 
   function custom_post_request(url, container, data = {}, hide_actions = false, delay = 0) {

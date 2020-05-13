@@ -23,10 +23,16 @@
 //the guy that handles loading of stuff 
 ajax_overlay_loader(); 
 //login prompt
-modal_header('m_login_prompt', 'The Needful');
+modal_header('m_login_prompt', 'Just a moment!');
     show_alert('I think you forgot to login...or sign up', 'info');
-    $vtype = 'floating';
-    require 'application/views/auth/login.php';
+    $vtype = 'floating'; ?>
+    <div id="floating_login">
+        <?php require 'application/views/auth/login.php'; ?>
+    </div>
+    <div id="floating_register" style="display: none;">
+        <?php require 'application/views/auth/register.php'; ?>
+    </div>
+    <?php
 modal_footer(false); 
 ?>
 
@@ -75,6 +81,18 @@ load_scripts($this->page_scripts, 'assets');
                 find_element('#post_section');
             } else {
                 location.href = base_url+'#post_section';
+            }
+        });
+
+        //login/signup toggle
+        $(document).on('click', '.acc_form_toggle', function(){
+            var id = $(this).data('id');
+            if (id === 'floating_login') {
+                $('#floating_login').show();
+                $('#floating_register').hide();
+            } else {
+                $('#floating_login').hide();
+                $('#floating_register').show();
             }
         });
     });

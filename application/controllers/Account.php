@@ -10,8 +10,9 @@ class Account extends Core_controller {
     public function register() {
         $this->show_sidebar = false;
         $this->show_page_title = false;
+        $data['vtype'] = 'regular';
         $this->web_header('Sign Up');
-        $this->load->view('auth/register');
+        $this->load->view('auth/register', $data);
         $this->web_footer();
     }
 
@@ -19,8 +20,8 @@ class Account extends Core_controller {
     public function login() {
         $this->show_sidebar = false;
         $this->show_page_title = false;
-        $this->web_header('Login');
         $data['vtype'] = 'regular';
+        $this->web_header('Login');
         $this->load->view('auth/login', $data);
         $this->web_footer();
     }
@@ -38,9 +39,9 @@ class Account extends Core_controller {
     public function reset_pass($username, $reset_code) {
         $this->show_sidebar = false;
         $this->show_page_title = false;
-        $this->web_header('Password Reset');
         $data['username'] = $username;
         $data['reset_code'] = $reset_code;
+        $this->web_header('Password Reset');
         $this->load->view('auth/reset_pass', $data);
         $this->web_footer();
     }

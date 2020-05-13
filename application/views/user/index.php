@@ -43,7 +43,7 @@
 		    <!-- Render posts async -->
 		</div>
 		<?php if ($row->user_posts > 0) { ?>
-			<a class="btn theme_button_red" href="<?php echo base_url('?user_posts='.$row->username); ?>">View All &raquo;</a>
+			<a class="btn btn-primary btn_raised_sm" href="<?php echo base_url('?user_posts='.$row->username); ?>">View All &raquo;</a>
 			<?php 
 		} else { ?>
 			<p>No posts yet.</p>
